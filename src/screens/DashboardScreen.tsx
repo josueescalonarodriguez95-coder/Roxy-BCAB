@@ -52,20 +52,20 @@ export function DashboardScreen() {
       )}
 
       <div className="stats">
-        <button className="stat" onClick={() => go('hours')}>
+        <button className="stat tint-blue" onClick={() => go('hours')}>
           <span className="stat-label">{t('dash.hoursMonth')}</span>
           <span className="stat-value">{num(clinical + admin)}</span>
           <span className="stat-sub">{t('dash.hoursSplit', { clinical: num(clinical), admin: num(admin) })}</span>
         </button>
-        <button className="stat" onClick={() => go('earnings')}>
+        <button className="stat tint-mint" onClick={() => go('earnings')}>
           <span className="stat-label">{t('dash.expectedMonth')}</span>
           <span className="stat-value">{money(expected)}</span>
         </button>
-        <button className={`stat ${pending > 0 ? 'stat-attention' : ''}`} onClick={() => go('earnings')}>
+        <button className={`stat tint-peach ${pending > 0 ? 'stat-attention' : ''}`} onClick={() => go('earnings')}>
           <span className="stat-label">{t('dash.pendingBalance')}</span>
           <span className="stat-value">{money(pending)}</span>
         </button>
-        <button className="stat" onClick={() => go('clients')}>
+        <button className="stat tint-pink" onClick={() => go('clients')}>
           <span className="stat-label">{t('dash.activeClients')}</span>
           <span className="stat-value">{clients.filter((c) => c.active).length}</span>
         </button>

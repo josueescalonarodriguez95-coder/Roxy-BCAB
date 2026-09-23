@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { LangSwitch } from './components/LangSwitch'
+import { NavIcon } from './components/NavIcon'
 import { APP_NAME } from './config'
 import { DataProvider, useData } from './data/DataContext'
 import { store, type User } from './data/store'
@@ -55,6 +56,11 @@ function Shell() {
     return () => window.removeEventListener('hashchange', onHash)
   }, [])
 
+  // On phones the menu is a horizontal strip: keep the current section in view.
+  useEffect(() => {
+    document.querySelector('.nav-item.active')?.scrollIntoView({ block: 'nearest', inline: 'center' })
+  }, [tab])
+
   const go = (next: Tab) => {
     window.location.hash = next
     setTab(next)
@@ -67,43 +73,64 @@ function Shell() {
 
   return (
     <NavContext.Provider value={go}>
-      {store.demo && <div className="demo-bar">{t('app.demoBanner')}</div>}
-      <header className="app-header">
-        <div className="header-inner">
+      <div className="bg-blobs" aria-hidden="true">
+        <span />
+        <span />
+        <span />
+        <span />
+      </div>
+      <div className="layout">
+        <aside className="sidebar glass">
           <button className="logo" onClick={() => go('dashboard')}>
             <span className="logo-mark">◆</span> {APP_NAME}
           </button>
-          <div className="header-actions">
-            <LangSwitch onChange={(language) => saveProfile({ language })} />
-            <button className="pill" onClick={() => saveProfile({ show_full_names: !profile.show_full_names })}>
-              {profile.show_full_names ? t('header.fullNames') : t('header.initials')}
-            </button>
+          <nav className="side-nav" aria-label="Main">
+            {tabs.map((id) => (
+              <button
+                key={id}
+                className={`nav-item nav-${id} ${id === tab ? 'active' : ''}`}
+                aria-current={id === tab ? 'page' : undefined}
+                onClick={() => go(id)}
+              >
+                <span className="nav-icon">
+                  <NavIcon tab={id} />
+                </span>
+                <span className="nav-label">{t(`tab.${id}`)}</span>
+                {id === 'warnings' && warnings.length > 0 && <span className="count">{warnings.length}</span>}
+              </button>
+            ))}
+          </nav>
+          <div className="side-footer">
             <button className="pill user-pill" onClick={() => go('settings')}>
-              {who ? `${who} · ` : ''}
-              {profile.credential}
+              <span className="avatar">{(who || profile.credential).charAt(0).toUpperCase()}</span>
+              <span>
+                {who ? `${who} · ` : ''}
+                {profile.credential}
+              </span>
             </button>
+            <div className="side-actions">
+              <LangSwitch onChange={(language) => saveProfile({ language })} />
+              <button className="pill" onClick={() => saveProfile({ show_full_names: !profile.show_full_names })}>
+                {profile.show_full_names ? t('header.fullNames') : t('header.initials')}
+              </button>
+            </div>
           </div>
-        </div>
-        <nav className="tabs" aria-label="Main">
-          {tabs.map((id) => (
-            <button key={id} className={id === tab ? 'active' : ''} aria-current={id === tab ? 'page' : undefined} onClick={() => go(id)}>
-              {t(`tab.${id}`)}
-              {id === 'warnings' && warnings.length > 0 && <span className="count">{warnings.length}</span>}
-            </button>
-          ))}
-        </nav>
-      </header>
-      <main className="page">
-        {tab === 'dashboard' && <DashboardScreen />}
-        {tab === 'clients' && <ClientsScreen />}
-        {tab === 'hours' && <HoursScreen />}
-        {tab === 'companies' && <CompaniesScreen />}
-        {tab === 'supervision' && profile.credential !== 'RBT' && <SupervisionScreen />}
-        {tab === 'earnings' && <EarningsScreen />}
-        {tab === 'todo' && <TodoScreen />}
-        {tab === 'warnings' && <WarningsScreen />}
-        {tab === 'settings' && <SettingsScreen key={profile.language} />}
-      </main>
+        </aside>
+        <main className="page">
+          {store.demo && <div className="demo-bar glass">{t('app.demoBanner')}</div>}
+          <div className="screen" key={tab}>
+            {tab === 'dashboard' && <DashboardScreen />}
+            {tab === 'clients' && <ClientsScreen />}
+            {tab === 'hours' && <HoursScreen />}
+            {tab === 'companies' && <CompaniesScreen />}
+            {tab === 'supervision' && profile.credential !== 'RBT' && <SupervisionScreen />}
+            {tab === 'earnings' && <EarningsScreen />}
+            {tab === 'todo' && <TodoScreen />}
+            {tab === 'warnings' && <WarningsScreen />}
+            {tab === 'settings' && <SettingsScreen key={profile.language} />}
+          </div>
+        </main>
+      </div>
     </NavContext.Provider>
   )
 }

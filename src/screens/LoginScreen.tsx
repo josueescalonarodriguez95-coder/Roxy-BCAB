@@ -15,6 +15,12 @@ export function LoginScreen() {
 
   return (
     <div className="center-screen login">
+      <div className="bg-blobs" aria-hidden="true">
+        <span />
+        <span />
+        <span />
+        <span />
+      </div>
       <div className="card narrow login-card">
         <div className="row-between">
           <div className="logo">
