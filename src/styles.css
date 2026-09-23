@@ -17,7 +17,7 @@
   --blob-3: #86e3c0;
   --blob-4: #ffbf85;
 
-  --bg: #f4f1fb;
+  --bg: #f6f1e8; /* bone / very light beige */
   --text: #2a2540;
   --text-2: #5b5575;
   --muted: #8a84a3;
@@ -113,9 +113,10 @@ button { -webkit-tap-highlight-color: transparent; }
 .row-between { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .error { color: var(--urgent); }
 
-/* ── Pastel background blobs (drift slowly behind the glass) ─────────────────────── */
+/* ── Background: solid bone color. The pastel blobs are kept but hidden (remove
+   `display: none` below to bring them back). ──────────────────────────────────────── */
 .bg-blobs { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; background: var(--bg); }
-.bg-blobs span { position: absolute; border-radius: 50%; filter: blur(60px); opacity: .85; animation: drift 26s var(--ease) infinite alternate; }
+.bg-blobs span { display: none; position: absolute; border-radius: 50%; filter: blur(60px); opacity: .85; animation: drift 26s var(--ease) infinite alternate; }
 .bg-blobs span:nth-child(1) { width: 48vw; height: 48vw; left: -10vw; top: -12vw; background: var(--blob-1); }
 .bg-blobs span:nth-child(2) { width: 40vw; height: 40vw; right: -8vw; top: 8vh; background: var(--blob-2); animation-duration: 32s; animation-delay: -6s; }
 .bg-blobs span:nth-child(3) { width: 44vw; height: 44vw; left: 22vw; bottom: -18vw; background: var(--blob-3); animation-duration: 30s; animation-delay: -12s; }
