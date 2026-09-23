@@ -5,13 +5,12 @@ ganancias, pagos, pendientes y advertencias automáticas. **Bilingüe (inglés /
 **multiusuario**: cada persona crea su cuenta y sólo ve sus propios datos, así se puede ofrecer
 a otras personas más adelante.
 
-Vive en esta carpeta, separada de la app de bodega (raíz del repo): tiene su propio
-`package.json` y no afecta al deploy de Storage Control.
+Proyecto independiente: su propio repositorio, su propio proyecto en Vercel y su propia base
+de datos en Supabase.
 
 ## Correr en local
 
 ```bash
-cd aba-focus
 npm install
 npm run dev
 ```
@@ -32,8 +31,9 @@ navegador. Sirve para probarla sin configurar nada.
 
 ## Deploy en Vercel
 
-Nuevo proyecto en Vercel apuntando a este mismo repo, con **Root Directory = `aba-focus`**, y
-las dos variables de arriba en Environment Variables.
+Vercel → Add New… → Project → importar este repositorio (Vercel detecta Vite solo) → agregar las
+dos variables de arriba en Environment Variables → Deploy. Después, en Supabase →
+Authentication → URL Configuration → Site URL, pegar el enlace que dio Vercel.
 
 ## Qué hay
 
