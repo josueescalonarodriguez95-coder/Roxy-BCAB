@@ -4,7 +4,16 @@ import { store, type User } from './store'
 import { TABLES, type Client, type Profile, type TableName, type Tables } from './types'
 
 type Rows = { [T in TableName]: Tables[T][] }
-const EMPTY: Rows = { companies: [], clients: [], hour_entries: [], payments: [], todos: [] }
+const EMPTY: Rows = {
+  companies: [],
+  clients: [],
+  hour_entries: [],
+  payments: [],
+  todos: [],
+  supervisees: [],
+  supervision_sessions: [],
+  supervisee_months: [],
+}
 
 interface Data extends Rows {
   user: User

@@ -43,13 +43,22 @@ las dos variables de arriba en Environment Variables.
 | Clientes | Iniciales o nombre, empresa, fechas de autorización |
 | Horas | Registro de horas clínicas y administrativas pagadas |
 | Empresas | Agencias con su tarifa clínica y administrativa |
-| Ganancias | Esperado por empresa (horas × tarifa), pagos recibidos, saldo, ahorro para impuestos |
+| Supervisión | RBTs y estudiantes de fieldwork: horas del mes, supervisión dada vs. requerida (5% / 10%), contactos, observación con cliente, % grupal, próxima reunión y avance de fieldwork (2,000 / 1,500 h). No aparece si la credencial es RBT; fieldwork sólo para BCBA |
+| Ganancias | Esperado por empresa (horas × tarifa), ganancias por supervisión (horas × tarifa del supervisado), pagos recibidos, saldo, ahorro para impuestos |
 | Pendientes | Libreta de tareas |
-| Advertencias | Sin horas en el mes, autorizaciones por vencer, pagos atrasados, fecha de certificación / primer año BCBA |
+| Advertencias | Sin horas en el mes, autorizaciones por vencer, pagos atrasados, fecha de certificación / primer año BCBA, contrato de supervisión faltante, horas del mes anterior sin registrar, requisito de supervisión no cumplido, sin próxima reunión |
 | Ajustes | Nombre, credencial, fecha de certificación, idioma, % de impuestos |
 
 El botón **Iniciales / Nombres completos** del encabezado oculta los nombres de clientes
 (privacidad si alguien ve la pantalla).
+
+## Reglas de supervisión
+
+Están todas en `src/lib/supervision.ts` (`RULES`) para poder actualizarlas en un solo lugar si
+la BACB las cambia. La pantalla recuerda verificarlas en los manuales de la BACB.
+
+Si ya habías corrido `schema.sql` antes, vuelve a correrlo completo: agrega las tablas nuevas
+(`supervisees`, `supervision_sessions`, `supervisee_months`) sin tocar lo que ya existe.
 
 ## Privacidad
 
@@ -58,7 +67,6 @@ Es un organizador personal, no un expediente clínico. Guardar lo mínimo de cad
 
 ## Próximas fases
 
-- Supervisión de RBTs (regla del 5% mensual) y supervisados de fieldwork
 - Documentos requeridos con fecha de vencimiento
 - Calendario
 - Reporte de pagos en PDF

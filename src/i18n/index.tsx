@@ -25,6 +25,8 @@ interface I18n {
   money: (n: number) => string
   num: (n: number) => string
   date: (d: ISODate | null | undefined) => string
+  /** 'YYYY-MM' → "August 2026" / "agosto de 2026" */
+  month: (m: string) => string
 }
 
 const Ctx = createContext<I18n | null>(null)
@@ -47,6 +49,8 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     const moneyFmt = new Intl.NumberFormat(locale, { style: 'currency', currency: 'USD' })
     const numFmt = new Intl.NumberFormat(locale, { maximumFractionDigits: 2 })
     const dateFmt = new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', year: 'numeric' })
+    const monthFmt = new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' })
+    const month = (m: string) => monthFmt.format(fromISO(`${m}-01`))
     const money = (n: number) => moneyFmt.format(n)
     return {
       lang,
@@ -54,6 +58,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
       money,
       num: (n) => numFmt.format(n),
       date: (d) => (d ? dateFmt.format(fromISO(d)) : '—'),
+      month,
       t: (key, params) => {
         let s: string = MESSAGES[lang][key] ?? key
         if (params) {
@@ -62,6 +67,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
             let shown = String(v)
             if (k === 'date' && typeof v === 'string') shown = dateFmt.format(fromISO(v))
             if (k === 'amount' && typeof v === 'number') shown = money(v)
+            if (k === 'month' && typeof v === 'string') shown = month(v)
             s = s.split(`{${k}}`).join(shown)
           }
         }

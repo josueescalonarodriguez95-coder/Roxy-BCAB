@@ -6,6 +6,7 @@ import type { Payment } from '../data/types'
 import { useI18n } from '../i18n'
 import { addDays, inRange, today, type DateRange } from '../lib/dates'
 import { earningsByCompany, paymentRemaining, paymentStatus, sumEarnings, sumPayments } from '../lib/earnings'
+import { supervisionEarnings } from '../lib/supervision'
 
 type Draft = Omit<Payment, 'id'> & { id?: string }
 
@@ -13,7 +14,7 @@ const STATUS_TONE = { confirmed: 'ok', partial: 'attention', pending: 'notice' }
 
 export function EarningsScreen() {
   const { t, money, num, date } = useI18n()
-  const { companies, hour_entries, payments, profile, save, remove, companyName } = useData()
+  const { companies, hour_entries, payments, profile, supervisees, supervision_sessions, save, remove, companyName } = useData()
   const [range, setRange] = useState(() => initialRange('month'))
   const [companyFilter, setCompanyFilter] = useState('')
   const [draft, setDraft] = useState<Draft | null>(null)
@@ -22,6 +23,12 @@ export function EarningsScreen() {
   const visibleCompanies = companyFilter ? companies.filter((c) => c.id === companyFilter) : companies
   const earnings = earningsByCompany(visibleCompanies, hour_entries, r)
   const totals = sumEarnings(earnings)
+  const supEarnings = supervisionEarnings(
+    companyFilter ? supervisees.filter((s) => s.company_id === companyFilter) : supervisees,
+    supervision_sessions,
+    r,
+    today(),
+  )
 
   // A payment belongs to the range where its pay period ends.
   const pays = payments
@@ -122,6 +129,48 @@ export function EarningsScreen() {
         )}
         <p className="muted small">{t('earnings.formula')}</p>
       </section>
+
+      {supEarnings.length > 0 && (
+        <section className="section">
+          <h2>{t('earnings.supervision')}</h2>
+          <div className="card table-card">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>{t('sup.name')}</th>
+                  <th className="num">{t('earnings.supHours')}</th>
+                  <th className="num">{t('earnings.rate')}</th>
+                  <th className="num">{t('earnings.totalExpected')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {supEarnings.map((e) => (
+                  <tr key={e.supervisee.id}>
+                    <td>
+                      <span className="dot" style={{ background: e.supervisee.color }} />
+                      {e.supervisee.name}
+                    </td>
+                    <td className="num">{num(e.hours)}</td>
+                    <td className="num">{money(e.supervisee.rate)}</td>
+                    <td className="num strong">{money(e.total)}</td>
+                  </tr>
+                ))}
+              </tbody>
+              {supEarnings.length > 1 && (
+                <tfoot>
+                  <tr>
+                    <td>{t('common.total')}</td>
+                    <td className="num">{num(supEarnings.reduce((sum, e) => sum + e.hours, 0))}</td>
+                    <td />
+                    <td className="num">{money(supEarnings.reduce((sum, e) => sum + e.total, 0))}</td>
+                  </tr>
+                </tfoot>
+              )}
+            </table>
+          </div>
+          <p className="muted small">{t('earnings.supervisionHelp')}</p>
+        </section>
+      )}
 
       <section className="section">
         <h2>{t('earnings.payments')}</h2>

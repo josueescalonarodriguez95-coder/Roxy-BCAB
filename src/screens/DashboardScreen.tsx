@@ -6,12 +6,13 @@ import { useWarnings } from '../data/useWarnings'
 import { useI18n } from '../i18n'
 import { inRange, rangeFor, today } from '../lib/dates'
 import { earningsByCompany, sumEarnings, sumPayments } from '../lib/earnings'
+import { supervisionEarnings } from '../lib/supervision'
 import { useGo } from '../nav'
 import { HourForm } from './HoursScreen'
 
 export function DashboardScreen() {
   const { t, money, num } = useI18n()
-  const { profile, companies, clients, hour_entries, payments, todos, save } = useData()
+  const { profile, companies, clients, hour_entries, payments, todos, supervisees, supervision_sessions, save } = useData()
   const warnings = useWarnings()
   const go = useGo()
   const [logging, setLogging] = useState(false)
@@ -20,7 +21,9 @@ export function DashboardScreen() {
   const monthHours = hour_entries.filter((h) => inRange(h.date, month.start, month.end))
   const clinical = monthHours.filter((h) => h.kind === 'clinical').reduce((s, h) => s + h.hours, 0)
   const admin = monthHours.filter((h) => h.kind === 'admin').reduce((s, h) => s + h.hours, 0)
-  const expected = sumEarnings(earningsByCompany(companies, hour_entries, month)).total
+  const expected =
+    sumEarnings(earningsByCompany(companies, hour_entries, month)).total +
+    supervisionEarnings(supervisees, supervision_sessions, month, today()).reduce((sum, e) => sum + e.total, 0)
   const pending = sumPayments(payments).remaining
   const openTodos = todos.filter((td) => !td.done)
   const name = profile.display_name.trim().split(' ')[0]

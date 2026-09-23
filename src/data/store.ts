@@ -32,7 +32,7 @@ function clean(v: string | undefined): string {
 }
 
 /** Postgres `numeric` comes back as a string; the app wants numbers. */
-const NUMERIC_FIELDS = ['clinical_rate', 'admin_rate', 'hours', 'expected', 'received', 'tax_rate']
+const NUMERIC_FIELDS = ['clinical_rate', 'admin_rate', 'hours', 'expected', 'received', 'tax_rate', 'rate']
 function normalize<R>(row: Record<string, unknown>): R {
   const out: Record<string, unknown> = { ...row }
   for (const f of NUMERIC_FIELDS) if (typeof out[f] === 'string') out[f] = Number(out[f])

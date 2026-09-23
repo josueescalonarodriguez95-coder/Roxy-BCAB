@@ -69,6 +69,46 @@ export interface Todo {
   created_at: string
 }
 
+export type SuperviseeKind = 'rbt' | 'fieldwork'
+export type FieldworkType = 'supervised' | 'concentrated'
+export type SessionFormat = 'individual' | 'group'
+
+export interface Supervisee {
+  id: string
+  name: string
+  kind: SuperviseeKind
+  /** Only used when kind = 'fieldwork'. */
+  fieldwork_type: FieldworkType
+  company_id: string | null
+  client_ids: string[]
+  /** What the user earns per hour of supervision (0 if it's part of the company job). */
+  rate: number
+  start_date: ISODate | null
+  contract_date: ISODate | null
+  color: string
+  active: boolean
+  notes: string
+}
+
+export interface SupervisionSession {
+  id: string
+  supervisee_id: string
+  date: ISODate
+  hours: number
+  format: SessionFormat
+  /** The supervisor observed the supervisee working with a client. */
+  with_client: boolean
+  note: string
+}
+
+export interface SuperviseeMonth {
+  id: string
+  supervisee_id: string
+  /** 'YYYY-MM' */
+  month: string
+  hours: number
+}
+
 /** Tables that hold a list of rows owned by the user (profiles is handled separately). */
 export interface Tables {
   companies: Company
@@ -76,6 +116,18 @@ export interface Tables {
   hour_entries: HourEntry
   payments: Payment
   todos: Todo
+  supervisees: Supervisee
+  supervision_sessions: SupervisionSession
+  supervisee_months: SuperviseeMonth
 }
 export type TableName = keyof Tables
-export const TABLES: TableName[] = ['companies', 'clients', 'hour_entries', 'payments', 'todos']
+export const TABLES: TableName[] = [
+  'companies',
+  'clients',
+  'hour_entries',
+  'payments',
+  'todos',
+  'supervisees',
+  'supervision_sessions',
+  'supervisee_months',
+]

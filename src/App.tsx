@@ -13,6 +13,7 @@ import { EarningsScreen } from './screens/EarningsScreen'
 import { HoursScreen } from './screens/HoursScreen'
 import { LoginScreen } from './screens/LoginScreen'
 import { SettingsScreen } from './screens/SettingsScreen'
+import { SupervisionScreen } from './screens/SupervisionScreen'
 import { TodoScreen } from './screens/TodoScreen'
 import { WarningsScreen } from './screens/WarningsScreen'
 
@@ -61,6 +62,8 @@ function Shell() {
   }
 
   const who = profile.display_name.trim().split(' ')[0]
+  // RBTs receive supervision instead of giving it.
+  const tabs = TABS.filter((id) => id !== 'supervision' || profile.credential !== 'RBT')
 
   return (
     <NavContext.Provider value={go}>
@@ -82,7 +85,7 @@ function Shell() {
           </div>
         </div>
         <nav className="tabs" aria-label="Main">
-          {TABS.map((id) => (
+          {tabs.map((id) => (
             <button key={id} className={id === tab ? 'active' : ''} aria-current={id === tab ? 'page' : undefined} onClick={() => go(id)}>
               {t(`tab.${id}`)}
               {id === 'warnings' && warnings.length > 0 && <span className="count">{warnings.length}</span>}
@@ -95,6 +98,7 @@ function Shell() {
         {tab === 'clients' && <ClientsScreen />}
         {tab === 'hours' && <HoursScreen />}
         {tab === 'companies' && <CompaniesScreen />}
+        {tab === 'supervision' && profile.credential !== 'RBT' && <SupervisionScreen />}
         {tab === 'earnings' && <EarningsScreen />}
         {tab === 'todo' && <TodoScreen />}
         {tab === 'warnings' && <WarningsScreen />}
