@@ -18,6 +18,7 @@ export const es: Record<MessageKey, string> = {
   'auth.toSignIn': '¿Ya tienes cuenta? Entra',
   'auth.demoEnter': 'Entrar al demo',
   'auth.checkEmail': 'Cuenta creada. Revisa tu correo para confirmarla y luego entra.',
+  'auth.networkError': 'No se pudo conectar con {host}. Revisa VITE_SUPABASE_URL en Vercel (debe verse como https://xxxx.supabase.co) y vuelve a publicar.',
   'auth.signOut': 'Salir',
 
   // Tabs

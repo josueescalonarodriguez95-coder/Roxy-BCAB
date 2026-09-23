@@ -16,6 +16,7 @@ export const en = {
   'auth.toSignIn': 'Already have an account? Sign in',
   'auth.demoEnter': 'Enter demo',
   'auth.checkEmail': 'Account created. Check your email to confirm it, then sign in.',
+  'auth.networkError': 'Could not connect to {host}. Check VITE_SUPABASE_URL in Vercel (it should look like https://xxxx.supabase.co) and redeploy.',
   'auth.signOut': 'Log out',
 
   // Tabs

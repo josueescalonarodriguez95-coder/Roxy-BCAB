@@ -13,6 +13,8 @@ export interface User {
  */
 export interface Store {
   readonly demo: boolean
+  /** Supabase host the app talks to ('' in demo mode); shown when the connection fails. */
+  readonly host: string
   currentUser(): Promise<User | null>
   onAuthChange(cb: (user: User | null) => void): () => void
   signIn(email: string, password: string): Promise<void>
@@ -42,10 +44,12 @@ function normalize<R>(row: Record<string, unknown>): R {
 
 class SupabaseStore implements Store {
   readonly demo = false
+  readonly host: string
   private sb: SupabaseClient
 
   constructor(url: string, key: string) {
     this.sb = createClient(url, key)
+    this.host = url.replace(/^https?:\/\//, '').replace(/\/.*$/, '')
   }
 
   async currentUser() {
@@ -126,6 +130,7 @@ const KEY = 'abadesk:'
 /** Demo mode: one local "account", rows kept in localStorage. */
 class LocalStore implements Store {
   readonly demo = true
+  readonly host = ''
   private listeners = new Set<(u: User | null) => void>()
 
   private read<R>(name: string): R[] {

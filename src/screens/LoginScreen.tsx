@@ -50,7 +50,13 @@ export function LoginScreen() {
                   }
                 }
               } catch (err) {
-                setMessage({ kind: 'error', text: err instanceof Error ? err.message : String(err) })
+                const text = err instanceof Error ? err.message : String(err)
+                // "Failed to fetch" means the browser never reached Supabase: almost always a wrong
+                // VITE_SUPABASE_URL. Show which address the app is using so it can be checked.
+                setMessage({
+                  kind: 'error',
+                  text: /fetch|network|load failed/i.test(text) ? t('auth.networkError', { host: store.host || '—' }) : text,
+                })
               } finally {
                 setBusy(false)
               }
