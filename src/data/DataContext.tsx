@@ -13,6 +13,7 @@ const EMPTY: Rows = {
   supervisees: [],
   supervision_sessions: [],
   supervisee_months: [],
+  events: [],
 }
 
 interface Data extends Rows {

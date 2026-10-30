@@ -39,6 +39,7 @@ Authentication → URL Configuration → Site URL, pegar el enlace que dio Verce
 
 | Pestaña | Qué hace |
 |---|---|
+| Calendario | Vistas de mes, semana, día y agenda. Arrastra en la cuadrícula para crear, arrastra un evento para moverlo y su borde de abajo para cambiar la duración. Eventos que se repiten, colores por tipo, filtros, y fechas de autorización, pagos y supervisión de las otras pestañas. "Marcar hecho y registrar" pasa el evento a Horas o a Supervisión. Atajos: T, M, S/W, D, A, ← →, N |
 | Inicio | Horas y ganancias del mes, saldo pendiente, advertencias y tareas |
 | Clientes | Iniciales o nombre, empresa, fechas de autorización |
 | Horas | Registro de horas clínicas y administrativas pagadas |
@@ -58,7 +59,7 @@ Están todas en `src/lib/supervision.ts` (`RULES`) para poder actualizarlas en u
 la BACB las cambia. La pantalla recuerda verificarlas en los manuales de la BACB.
 
 Si ya habías corrido `schema.sql` antes, vuelve a correrlo completo: agrega las tablas nuevas
-(`supervisees`, `supervision_sessions`, `supervisee_months`) sin tocar lo que ya existe.
+(`supervisees`, `supervision_sessions`, `supervisee_months`, `events`) sin tocar lo que ya existe.
 
 ## Privacidad
 
@@ -68,7 +69,6 @@ Es un organizador personal, no un expediente clínico. Guardar lo mínimo de cad
 ## Próximas fases
 
 - Documentos requeridos con fecha de vencimiento
-- Calendario
 - Reporte de pagos en PDF
 
 ## Nombre y mensaje personal

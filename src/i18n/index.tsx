@@ -27,6 +27,10 @@ interface I18n {
   date: (d: ISODate | null | undefined) => string
   /** 'YYYY-MM' → "August 2026" / "agosto de 2026" */
   month: (m: string) => string
+  /** 'HH:MM' → "9:30 AM" (short, locale style) */
+  time: (hhmm: string | null | undefined) => string
+  /** Locale-formatted date with custom options, e.g. weekday names. */
+  fmt: (d: ISODate, opts: Intl.DateTimeFormatOptions) => string
 }
 
 const Ctx = createContext<I18n | null>(null)
@@ -51,6 +55,19 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     const dateFmt = new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', year: 'numeric' })
     const monthFmt = new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' })
     const month = (m: string) => monthFmt.format(fromISO(`${m}-01`))
+    const timeFmt = new Intl.DateTimeFormat(locale, { hour: 'numeric', minute: '2-digit' })
+    const time = (hhmm: string | null | undefined) => {
+      if (!hhmm) return ''
+      const [h, m] = hhmm.split(':').map(Number)
+      return timeFmt.format(new Date(2000, 0, 1, h, m))
+    }
+    const fmtCache = new Map<string, Intl.DateTimeFormat>()
+    const fmt = (d: ISODate, opts: Intl.DateTimeFormatOptions) => {
+      const k = JSON.stringify(opts)
+      let f = fmtCache.get(k)
+      if (!f) fmtCache.set(k, (f = new Intl.DateTimeFormat(locale, opts)))
+      return f.format(fromISO(d))
+    }
     const money = (n: number) => moneyFmt.format(n)
     return {
       lang,
@@ -59,6 +76,8 @@ export function I18nProvider({ children }: { children: ReactNode }) {
       num: (n) => numFmt.format(n),
       date: (d) => (d ? dateFmt.format(fromISO(d)) : '—'),
       month,
+      time,
+      fmt,
       t: (key, params) => {
         let s: string = MESSAGES[lang][key] ?? key
         if (params) {

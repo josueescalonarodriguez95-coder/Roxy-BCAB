@@ -109,6 +109,30 @@ export interface SuperviseeMonth {
   hours: number
 }
 
+export type EventKind = 'session' | 'supervision' | 'assessment' | 'meeting' | 'admin' | 'personal' | 'other'
+export const EVENT_KINDS: EventKind[] = ['session', 'supervision', 'assessment', 'meeting', 'admin', 'personal', 'other']
+
+export interface CalendarEvent {
+  id: string
+  title: string
+  date: ISODate
+  /** 'HH:MM' local time; null for all-day events. */
+  start_time: string | null
+  end_time: string | null
+  kind: EventKind
+  client_id: string | null
+  company_id: string | null
+  supervisee_id: string | null
+  location: string
+  notes: string
+  /** Shared by every occurrence of a repeating event. */
+  series_id: string | null
+  done: boolean
+  /** Hours / supervision logged from this event when it was marked done. */
+  hour_entry_id: string | null
+  supervision_session_id: string | null
+}
+
 /** Tables that hold a list of rows owned by the user (profiles is handled separately). */
 export interface Tables {
   companies: Company
@@ -119,6 +143,7 @@ export interface Tables {
   supervisees: Supervisee
   supervision_sessions: SupervisionSession
   supervisee_months: SuperviseeMonth
+  events: CalendarEvent
 }
 export type TableName = keyof Tables
 export const TABLES: TableName[] = [
@@ -130,4 +155,5 @@ export const TABLES: TableName[] = [
   'supervisees',
   'supervision_sessions',
   'supervisee_months',
+  'events',
 ]

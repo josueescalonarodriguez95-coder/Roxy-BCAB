@@ -7,6 +7,7 @@ import { store, type User } from './data/store'
 import { useWarnings } from './data/useWarnings'
 import { useI18n } from './i18n'
 import { NavContext, TABS, type Tab } from './nav'
+import { CalendarScreen } from './screens/CalendarScreen'
 import { ClientsScreen } from './screens/ClientsScreen'
 import { CompaniesScreen } from './screens/CompaniesScreen'
 import { DashboardScreen } from './screens/DashboardScreen'
@@ -120,6 +121,7 @@ function Shell() {
           {store.demo && <div className="demo-bar glass">{t('app.demoBanner')}</div>}
           <div className="screen" key={tab}>
             {tab === 'dashboard' && <DashboardScreen />}
+            {tab === 'calendar' && <CalendarScreen />}
             {tab === 'clients' && <ClientsScreen />}
             {tab === 'hours' && <HoursScreen />}
             {tab === 'companies' && <CompaniesScreen />}

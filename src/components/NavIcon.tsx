@@ -3,6 +3,7 @@ import type { Tab } from '../nav'
 /** Line icons for the sidebar (24×24, drawn with currentColor). */
 const PATHS: Record<Tab, string> = {
   dashboard: 'M3 11.5 12 4l9 7.5M5.5 9.5V20h5v-5.5h3V20h5V9.5',
+  calendar: 'M4 6.5A1.5 1.5 0 0 1 5.5 5h13A1.5 1.5 0 0 1 20 6.5v12a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5v-12ZM4 10h16M8.5 3v4m7-4v4M8 13.5h2m3 0h2M8 16.5h2',
   clients: 'M8.5 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm-6 9c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5M16 4.3a3.5 3.5 0 0 1 0 6.4M18 14.8c2 .6 3.5 2.4 3.5 5.2',
   hours: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0-13.5V12l3 2',
   companies: 'M4 21V6.5L12 3l8 3.5V21M4 21h16M9 21v-4h6v4M8.5 9.5h1m5 0h1m-7 3.5h1m5 0h1',

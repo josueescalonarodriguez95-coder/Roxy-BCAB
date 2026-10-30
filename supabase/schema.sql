@@ -125,6 +125,29 @@ create table if not exists supervisee_months (
   unique (supervisee_id, month)
 );
 
+-- Calendar events. Times are local 'HH:MM' text (null = all-day) so nothing shifts with time
+-- zones. Repeating events are stored as separate rows sharing a series_id.
+create table if not exists events (
+  id uuid primary key default gen_random_uuid(),
+  owner_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  title text not null,
+  date date not null,
+  start_time text,
+  end_time text,
+  kind text not null default 'session',
+  client_id uuid references clients(id) on delete set null,
+  company_id uuid references companies(id) on delete set null,
+  supervisee_id uuid references supervisees(id) on delete set null,
+  location text not null default '',
+  notes text not null default '',
+  series_id uuid,
+  done boolean not null default false,
+  hour_entry_id uuid references hour_entries(id) on delete set null,
+  supervision_session_id uuid references supervision_sessions(id) on delete set null,
+  created_at timestamptz not null default now()
+);
+create index if not exists events_owner_date_idx on events(owner_id, date);
+
 -- Row Level Security: each user reads and writes only their own rows.
 alter table profiles enable row level security;
 alter table companies enable row level security;
@@ -135,6 +158,7 @@ alter table todos enable row level security;
 alter table supervisees enable row level security;
 alter table supervision_sessions enable row level security;
 alter table supervisee_months enable row level security;
+alter table events enable row level security;
 
 drop policy if exists "own profile" on profiles;
 create policy "own profile" on profiles for all to authenticated
@@ -143,7 +167,7 @@ create policy "own profile" on profiles for all to authenticated
 do $$
 declare t text;
 begin
-  foreach t in array array['companies', 'clients', 'hour_entries', 'payments', 'todos', 'supervisees', 'supervision_sessions', 'supervisee_months'] loop
+  foreach t in array array['companies', 'clients', 'hour_entries', 'payments', 'todos', 'supervisees', 'supervision_sessions', 'supervisee_months', 'events'] loop
     execute format('drop policy if exists "own rows" on %I', t);
     execute format(
       'create policy "own rows" on %I for all to authenticated using (owner_id = auth.uid()) with check (owner_id = auth.uid())',

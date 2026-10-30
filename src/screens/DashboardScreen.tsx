@@ -8,11 +8,13 @@ import { inRange, rangeFor, today } from '../lib/dates'
 import { earningsByCompany, sumEarnings, sumPayments } from '../lib/earnings'
 import { supervisionEarnings } from '../lib/supervision'
 import { useGo } from '../nav'
+import { KIND_COLORS, sortEvents } from '../lib/calendar'
+import { addDays } from '../lib/dates'
 import { HourForm } from './HoursScreen'
 
 export function DashboardScreen() {
-  const { t, money, num } = useI18n()
-  const { profile, companies, clients, hour_entries, payments, todos, supervisees, supervision_sessions, save } = useData()
+  const { t, money, num, fmt, time } = useI18n()
+  const { profile, companies, clients, hour_entries, payments, todos, supervisees, supervision_sessions, events, save } = useData()
   const warnings = useWarnings()
   const go = useGo()
   const [logging, setLogging] = useState(false)
@@ -27,6 +29,10 @@ export function DashboardScreen() {
   const pending = sumPayments(payments).remaining
   const openTodos = todos.filter((td) => !td.done)
   const name = profile.display_name.trim().split(' ')[0]
+  const upcoming = events
+    .filter((e) => e.date >= today() && e.date <= addDays(today(), 7) && !e.done)
+    .sort(sortEvents)
+    .slice(0, 6)
 
   return (
     <>
@@ -100,6 +106,38 @@ export function DashboardScreen() {
                     <input type="checkbox" onChange={() => save('todos', { ...td, done: true, done_at: new Date().toISOString() })} />
                     {td.text}
                   </label>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+        <section className="card">
+          <div className="row-between">
+            <h2>{t('cal.upcoming')}</h2>
+            <button className="btn small link" onClick={() => go('calendar')}>
+              {t('dash.seeAll')}
+            </button>
+          </div>
+          {upcoming.length === 0 ? (
+            <p className="muted">{t('cal.noUpcoming')}</p>
+          ) : (
+            <ul className="upcoming">
+              {upcoming.map((e) => (
+                <li key={e.id}>
+                  <button
+                    className="upcoming-item"
+                    style={{ '--ev-bg': KIND_COLORS[e.kind].bg, '--ev-fg': KIND_COLORS[e.kind].fg } as React.CSSProperties}
+                    onClick={() => go('calendar')}
+                  >
+                    <span className="upcoming-date">
+                      <strong>{Number(e.date.slice(8))}</strong>
+                      <small>{fmt(e.date, { weekday: 'short' })}</small>
+                    </span>
+                    <span className="upcoming-text">
+                      <span className="upcoming-title">{e.title}</span>
+                      <span className="muted small">{e.start_time ? `${time(e.start_time)} – ${time(e.end_time)}` : t('cal.allDay')}</span>
+                    </span>
+                  </button>
                 </li>
               ))}
             </ul>
