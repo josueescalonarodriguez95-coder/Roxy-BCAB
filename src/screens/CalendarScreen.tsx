@@ -228,6 +228,14 @@ export function CalendarScreen() {
   const toggleOverlay = (o: Overlay) =>
     updatePrefs({ overlays: prefs.overlays.includes(o) ? prefs.overlays.filter((x) => x !== o) : [...prefs.overlays, o] })
 
+  if (data.missing.includes('events')) {
+    return (
+      <div className="card callout schema-callout">
+        <p style={{ whiteSpace: 'pre-wrap' }}>{t('app.schemaOutdated')}</p>
+      </div>
+    )
+  }
+
   return (
     <div className="calendar">
       <aside className="cal-side">

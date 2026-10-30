@@ -23,6 +23,8 @@ interface Data extends Rows {
   /** Inserts when `id` is missing, updates otherwise. */
   save: <T extends TableName>(table: T, row: Omit<Tables[T], 'id'> & { id?: string }) => Promise<Tables[T]>
   remove: (table: TableName, id: string) => Promise<void>
+  /** Tables the database doesn't have yet (schema.sql needs to be run again). */
+  missing: TableName[]
   clientName: (c: Client | undefined | null) => string
   companyName: (id: string | null | undefined) => string
 }
@@ -48,16 +50,29 @@ export function DataProvider({ user, children }: { user: User; children: ReactNo
   const [profile, setProfile] = useState<Profile | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [attempt, setAttempt] = useState(0)
+  const [missing, setMissing] = useState<TableName[]>([])
 
   useEffect(() => {
     let alive = true
     setError(null)
-    Promise.all([store.getProfile(user), ...TABLES.map((tbl) => store.list(tbl))])
+    // A table that doesn't exist yet (schema.sql not re-run after an update) loads as empty and
+    // is remembered as missing, so the rest of the app keeps working.
+    const missingNow: TableName[] = []
+    const load = (tbl: TableName) =>
+      store.list(tbl).catch((e: unknown) => {
+        if (e instanceof SchemaOutdatedError) {
+          missingNow.push(tbl)
+          return []
+        }
+        throw e
+      })
+    Promise.all([store.getProfile(user), ...TABLES.map(load)])
       .then(([p, ...lists]) => {
         if (!alive) return
         const next = { ...EMPTY }
         TABLES.forEach((tbl, i) => ((next as Record<TableName, unknown[]>)[tbl] = lists[i] as unknown[]))
         setRows(next)
+        setMissing(missingNow)
         const prof = (p as Profile | null) ?? defaultProfile(user, lang)
         setProfile(prof)
         if (p) setLang(prof.language)
@@ -110,8 +125,8 @@ export function DataProvider({ user, children }: { user: User; children: ReactNo
       return (c.first_name.charAt(0) + c.last_name.charAt(0)).toUpperCase() || '?'
     }
     const companyName = (id: string | null | undefined) => rows.companies.find((c) => c.id === id)?.name ?? '—'
-    return { ...rows, user, profile, saveProfile, save, remove, clientName, companyName }
-  }, [rows, profile, user, saveProfile, save, remove])
+    return { ...rows, user, profile, missing, saveProfile, save, remove, clientName, companyName }
+  }, [rows, profile, user, missing, saveProfile, save, remove])
 
   if (error) {
     return (

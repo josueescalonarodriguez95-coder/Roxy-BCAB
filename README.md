@@ -53,6 +53,18 @@ Authentication → URL Configuration → Site URL, pegar el enlace que dio Verce
 El botón **Iniciales / Nombres completos** del encabezado oculta los nombres de clientes
 (privacidad si alguien ve la pantalla).
 
+## Actualizar la base de datos automáticamente
+
+`.github/workflows/supabase-schema.yml` vuelve a correr `supabase/schema.sql` en Supabase cada vez
+que ese archivo cambia en `main`, así las funciones nuevas no requieren ir al SQL Editor.
+Se activa una sola vez:
+
+1. Supabase → **Connect** → **Session pooler** → copiar la URI y poner la contraseña de la base de
+   datos donde dice `[YOUR-PASSWORD]`.
+2. GitHub → este repo → **Settings → Secrets and variables → Actions → New repository secret**,
+   nombre `SUPABASE_DB_URL`, valor la URI del paso 1.
+3. Para aplicarlo ya: **Actions → Update Supabase database → Run workflow**.
+
 ## Reglas de supervisión
 
 Están todas en `src/lib/supervision.ts` (`RULES`) para poder actualizarlas en un solo lugar si

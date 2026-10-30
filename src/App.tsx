@@ -47,7 +47,7 @@ function tabFromHash(): Tab {
 
 function Shell() {
   const { t } = useI18n()
-  const { profile, saveProfile } = useData()
+  const { profile, saveProfile, missing } = useData()
   const warnings = useWarnings()
   const [tab, setTab] = useState<Tab>(tabFromHash)
 
@@ -119,6 +119,7 @@ function Shell() {
         </aside>
         <main className="page">
           {store.demo && <div className="demo-bar glass">{t('app.demoBanner')}</div>}
+          {missing.length > 0 && <div className="demo-bar glass">{t('app.schemaBanner')}</div>}
           <div className="screen" key={tab}>
             {tab === 'dashboard' && <DashboardScreen />}
             {tab === 'calendar' && <CalendarScreen />}

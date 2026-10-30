@@ -5,6 +5,7 @@ export const en = {
   'app.loading': 'Loading…',
   'app.error': 'Something went wrong',
   'app.schemaOutdated': 'The database needs an update for the new features. In Supabase open SQL Editor → New query, paste the whole supabase/schema.sql file from the repository and click Run. Nothing you saved will be deleted. Then press Try again.',
+  'app.schemaBanner': 'Some new features need a database update: run supabase/schema.sql again in Supabase (SQL Editor → Run).',
   'app.retry': 'Try again',
 
   // Auth
