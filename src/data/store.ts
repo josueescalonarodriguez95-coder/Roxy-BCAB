@@ -33,6 +33,22 @@ function clean(v: string | undefined): string {
   return (v ?? '').replace(/[^\x20-\x7E]/g, '').trim()
 }
 
+/** Thrown when the database is missing a table or column the app needs (schema.sql not re-run). */
+export class SchemaOutdatedError extends Error {}
+
+/**
+ * Supabase returns plain objects ({ message, code }), not Error instances, so showing them
+ * directly prints "[object Object]". Turn them into real errors with a readable message.
+ */
+function toError(err: { message?: string; code?: string }): Error {
+  const msg = err.message ?? String(err)
+  // 42P01 / PGRST205: table missing; 42703 / PGRST204: column missing.
+  if (['42P01', 'PGRST205', '42703', 'PGRST204'].includes(err.code ?? '') || /does not exist|schema cache/i.test(msg)) {
+    return new SchemaOutdatedError(msg)
+  }
+  return new Error(msg)
+}
+
 /** Postgres `numeric` comes back as a string; the app wants numbers. */
 const NUMERIC_FIELDS = ['clinical_rate', 'admin_rate', 'hours', 'expected', 'received', 'tax_rate', 'rate']
 function normalize<R>(row: Record<string, unknown>): R {
@@ -68,12 +84,12 @@ class SupabaseStore implements Store {
 
   async signIn(email: string, password: string) {
     const { error } = await this.sb.auth.signInWithPassword({ email, password })
-    if (error) throw error
+    if (error) throw toError(error)
   }
 
   async signUp(email: string, password: string) {
     const { data, error } = await this.sb.auth.signUp({ email, password })
-    if (error) throw error
+    if (error) throw toError(error)
     return { needsConfirmation: !data.session }
   }
 
@@ -83,37 +99,37 @@ class SupabaseStore implements Store {
 
   async getProfile(user: User) {
     const { data, error } = await this.sb.from('profiles').select('*').eq('id', user.id).maybeSingle()
-    if (error) throw error
+    if (error) throw toError(error)
     return data ? normalize<Profile>(data) : null
   }
 
   async saveProfile(profile: Profile) {
     const { data, error } = await this.sb.from('profiles').upsert(profile).select().single()
-    if (error) throw error
+    if (error) throw toError(error)
     return normalize<Profile>(data)
   }
 
   async list<T extends TableName>(table: T) {
     const { data, error } = await this.sb.from(table).select('*').order('created_at')
-    if (error) throw error
+    if (error) throw toError(error)
     return (data ?? []).map((r) => normalize<Tables[T]>(r))
   }
 
   async insert<T extends TableName>(table: T, row: Omit<Tables[T], 'id'>) {
     const { data, error } = await this.sb.from(table).insert(row as never).select().single()
-    if (error) throw error
+    if (error) throw toError(error)
     return normalize<Tables[T]>(data)
   }
 
   async update<T extends TableName>(table: T, id: string, patch: Partial<Tables[T]>) {
     const { data, error } = await this.sb.from(table).update(patch as never).eq('id', id).select().single()
-    if (error) throw error
+    if (error) throw toError(error)
     return normalize<Tables[T]>(data)
   }
 
   async remove(table: TableName, id: string) {
     const { error } = await this.sb.from(table).delete().eq('id', id)
-    if (error) throw error
+    if (error) throw toError(error)
   }
 }
 

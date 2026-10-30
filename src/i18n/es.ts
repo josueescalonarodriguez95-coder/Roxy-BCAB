@@ -6,6 +6,7 @@ export const es: Record<MessageKey, string> = {
   'app.demoBanner': 'Modo demo: los datos se guardan sólo en este navegador. Conecta Supabase para usar cuentas reales.',
   'app.loading': 'Cargando…',
   'app.error': 'Algo salió mal',
+  'app.schemaOutdated': 'La base de datos necesita actualizarse para las funciones nuevas. En Supabase abre SQL Editor → New query, pega todo el archivo supabase/schema.sql del repositorio y presiona Run. No se borra nada de lo que ya guardaste. Luego presiona Reintentar.',
   'app.retry': 'Reintentar',
 
   // Auth

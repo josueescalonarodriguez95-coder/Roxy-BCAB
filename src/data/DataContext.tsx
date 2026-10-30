@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useI18n } from '../i18n'
-import { store, type User } from './store'
+import { SchemaOutdatedError, store, type User } from './store'
 import { TABLES, type Client, type Profile, type TableName, type Tables } from './types'
 
 type Rows = { [T in TableName]: Tables[T][] }
@@ -62,7 +62,11 @@ export function DataProvider({ user, children }: { user: User; children: ReactNo
         setProfile(prof)
         if (p) setLang(prof.language)
       })
-      .catch((e: unknown) => alive && setError(e instanceof Error ? e.message : String(e)))
+      .catch((e: unknown) => {
+        if (!alive) return
+        if (e instanceof SchemaOutdatedError) setError(`${t('app.schemaOutdated')}\n\n(${e.message})`)
+        else setError(e instanceof Error ? e.message : JSON.stringify(e))
+      })
     return () => {
       alive = false
     }
@@ -114,7 +118,9 @@ export function DataProvider({ user, children }: { user: User; children: ReactNo
       <div className="center-screen">
         <div className="card narrow">
           <h2>{t('app.error')}</h2>
-          <p className="muted">{error}</p>
+          <p className="muted" style={{ whiteSpace: 'pre-wrap' }}>
+            {error}
+          </p>
           <button className="btn primary" onClick={() => setAttempt((a) => a + 1)}>
             {t('app.retry')}
           </button>
