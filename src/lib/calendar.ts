@@ -12,6 +12,7 @@ export const KIND_COLORS: Record<EventKind, { bg: string; fg: string }> = {
   session: { bg: '#ffd3e5', fg: '#b03a6e' },
   supervision: { bg: '#c8f2df', fg: '#1f7a55' },
   assessment: { bg: '#ddd0ff', fg: '#5b3fc4' },
+  parent_training: { bg: '#ffd9cf', fg: '#b4452c' },
   meeting: { bg: '#cfe5ff', fg: '#2a5ea8' },
   admin: { bg: '#ffe2c6', fg: '#a2561a' },
   personal: { bg: '#fff3b8', fg: '#8a6d00' },

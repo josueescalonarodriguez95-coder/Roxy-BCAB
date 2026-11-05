@@ -4,7 +4,7 @@ import { useData } from '../../data/DataContext'
 import { EVENT_KINDS, type CalendarEvent, type EventKind } from '../../data/types'
 import { useI18n } from '../../i18n'
 import { DAY_MIN, durationHours, fromMin, KIND_COLORS, repeatDates, toMin, type Repeat } from '../../lib/calendar'
-import { logTarget } from './EventDetails'
+import { LogNotice } from './EventDetails'
 import { addDays } from '../../lib/dates'
 
 export type EventDraft = Omit<CalendarEvent, 'id'> & { id?: string }
@@ -21,7 +21,7 @@ export function EventForm({
   onClose: () => void
   onSave: (d: EventDraft, dates: string[]) => Promise<void>
 }) {
-  const { t, num } = useI18n()
+  const { t } = useI18n()
   const { clients, companies, supervisees, clientName, profile } = useData()
   const [d, setD] = useState(draft)
   const [allDay, setAllDay] = useState(!draft.start_time)
@@ -170,16 +170,8 @@ export function EventForm({
         <Field label={t('common.notes')}>
           <textarea rows={2} value={d.notes} onChange={(e) => setD({ ...d, notes: e.target.value })} />
         </Field>
-        {(() => {
-          // Tell her right here whether this event will show up in Hours / Supervision.
-          const target = logTarget(d)
-          const hours = allDay ? 0 : durationHours(d)
-          if (target.missing) return <p className="pop-log warn">{t(target.missing === 'company' ? 'cal.needCompany' : 'cal.needSupervisee')}</p>
-          if (!target.what) return null
-          if (!hours) return <p className="pop-log warn">{t('cal.needTime')}</p>
-          const what = t(target.what === 'clinical' ? 'cal.logClinical' : target.what === 'admin' ? 'cal.logAdmin' : 'cal.logSupervision')
-          return <p className="pop-log ok">{t('cal.autoHint', { h: num(hours), what })}</p>
-        })()}
+        {/* Tells her right here whether this event will show up in Hours / Supervision. */}
+        <LogNotice e={d} hours={allDay ? 0 : durationHours(d)} logged={false} />
         {error && <p className="error">{error}</p>}
         <div className="form-actions">
           <span className="spacer" />

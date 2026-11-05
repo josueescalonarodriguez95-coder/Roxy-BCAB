@@ -71,7 +71,7 @@ export function HoursScreen() {
                   </td>
                   <td>{h.client_id ? clientName(clients.find((c) => c.id === h.client_id)) : '—'}</td>
                   <td>
-                    <Badge tone={h.kind === 'clinical' ? 'ok' : 'muted'}>{t(h.kind === 'clinical' ? 'hours.clinical' : 'hours.admin')}</Badge>
+                    <Badge tone={h.kind === 'clinical' ? 'ok' : h.kind === 'supervision' ? 'notice' : 'muted'}>{t(`hours.${h.kind}`)}</Badge>
                   </td>
                   <td className="num">{num(h.hours)}</td>
                 </tr>

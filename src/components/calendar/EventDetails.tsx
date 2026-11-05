@@ -2,17 +2,36 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useData } from '../../data/DataContext'
 import { useI18n } from '../../i18n'
 import { durationHours } from '../../lib/calendar'
+import { logPlan } from '../../lib/eventLog'
+import type { CalendarEvent } from '../../data/types'
 import { useGo } from '../../nav'
 import { colorOf, type DisplayEvent } from './types'
 
 export type DeleteScope = 'one' | 'following' | 'series'
 
-/** What this event logs automatically (Hours or Supervision), or what it still needs. */
-export function logTarget(e: Pick<DisplayEvent, 'kind' | 'company_id' | 'supervisee_id'>): { what: 'clinical' | 'admin' | 'supervision' | null; missing?: 'company' | 'supervisee' } {
-  if (e.kind === 'supervision') return e.supervisee_id ? { what: 'supervision' } : { what: null, missing: 'supervisee' }
-  const what = e.kind === 'session' || e.kind === 'assessment' ? 'clinical' : e.kind === 'meeting' || e.kind === 'admin' ? 'admin' : null
-  if (!what) return { what: null }
-  return e.company_id ? { what } : { what: null, missing: 'company' }
+/**
+ * Line under an event (in its card and in the form) saying whether its hours go to Hours /
+ * Supervision automatically, or what is still missing for that.
+ */
+export function LogNotice({ e, hours, logged }: { e: Pick<CalendarEvent, 'kind' | 'company_id' | 'client_id' | 'supervisee_id'>; hours: number; logged: boolean }) {
+  const { t, num } = useI18n()
+  const { clients, companies, supervisees } = useData()
+  const plan = logPlan(e, { clients, companies, supervisees })
+  if (!plan.hourKind) return null
+  if (plan.missing.length)
+    return (
+      <p className="pop-log warn">
+        {plan.missing.map((m) => t(m === 'company' ? 'cal.needCompany' : 'cal.needSupervisee')).join(' ')}
+      </p>
+    )
+  if (!hours) return <p className="pop-log warn">{t('cal.needTime')}</p>
+  const what = t(`cal.kind.${e.kind}`).toLowerCase()
+  return (
+    <p className="pop-log ok">
+      {t(logged ? 'cal.loggedAuto' : 'cal.autoHint', { h: num(hours), what })}
+      {plan.supervision && t('cal.alsoSupervision')}
+    </p>
+  )
 }
 
 /** Card that pops up next to an event with its details and actions (bottom sheet on phones). */
@@ -33,7 +52,7 @@ export function EventDetails({
   onDelete: (scope: DeleteScope) => void
   onToggleDone: () => void
 }) {
-  const { t, fmt, time, num } = useI18n()
+  const { t, fmt, time } = useI18n()
   const { clients, companies, supervisees, clientName } = useData()
   const go = useGo()
   const ref = useRef<HTMLDivElement>(null)
@@ -61,7 +80,6 @@ export function EventDetails({
   }, [onClose])
 
   const client = clients.find((x) => x.id === e.client_id)
-  const target = logTarget(e)
   const hours = durationHours(e)
   const logged = !!(e.hour_entry_id || e.supervision_session_id)
   const kindLabel = t(`cal.kind.${e.kind}`)
@@ -137,18 +155,7 @@ export function EventDetails({
           </div>
         ) : (
           <>
-            {target.missing ? (
-              <p className="pop-log warn">{t(target.missing === 'company' ? 'cal.needCompany' : 'cal.needSupervisee')}</p>
-            ) : target.what && logged ? (
-              <p className="pop-log ok">
-                {t('cal.loggedAuto', {
-                  h: num(hours),
-                  what: t(target.what === 'clinical' ? 'cal.logClinical' : target.what === 'admin' ? 'cal.logAdmin' : 'cal.logSupervision'),
-                })}
-              </p>
-            ) : target.what && !hours ? (
-              <p className="pop-log warn">{t('cal.needTime')}</p>
-            ) : null}
+            <LogNotice e={e} hours={hours} logged={logged} />
             <button className={`btn block ${e.done ? '' : 'primary'}`} onClick={onToggleDone}>
               {e.done ? `↺ ${t('cal.undoDone')}` : `✓ ${t('cal.markDoneSimple')}`}
             </button>

@@ -4,7 +4,8 @@ export type ISODate = string
 export type Credential = 'BCBA' | 'BCaBA' | 'RBT'
 export type Lang = 'en' | 'es'
 export type PaySchedule = 'weekly' | 'biweekly' | 'semimonthly' | 'monthly'
-export type HourKind = 'clinical' | 'admin'
+/** 'supervision' hours come from the calendar; they're paid through the supervisee's rate. */
+export type HourKind = 'clinical' | 'admin' | 'supervision'
 
 export interface Profile {
   id: string
@@ -109,8 +110,8 @@ export interface SuperviseeMonth {
   hours: number
 }
 
-export type EventKind = 'session' | 'supervision' | 'assessment' | 'meeting' | 'admin' | 'personal' | 'other'
-export const EVENT_KINDS: EventKind[] = ['session', 'supervision', 'assessment', 'meeting', 'admin', 'personal', 'other']
+export type EventKind = 'session' | 'supervision' | 'assessment' | 'parent_training' | 'meeting' | 'admin' | 'personal' | 'other'
+export const EVENT_KINDS: EventKind[] = ['session', 'supervision', 'assessment', 'parent_training', 'meeting', 'admin', 'personal', 'other']
 
 export interface CalendarEvent {
   id: string

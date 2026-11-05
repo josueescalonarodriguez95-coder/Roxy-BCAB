@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AgendaView } from '../components/calendar/AgendaView'
-import { EventDetails, logTarget, type DeleteScope } from '../components/calendar/EventDetails'
+import { EventDetails, type DeleteScope } from '../components/calendar/EventDetails'
+import { logPlan } from '../lib/eventLog'
 import { EventForm, type EventDraft } from '../components/calendar/EventForm'
 import { MiniMonth } from '../components/calendar/MiniMonth'
 import { MonthView } from '../components/calendar/MonthView'
@@ -120,25 +121,25 @@ export function CalendarScreen() {
   )
 
   /**
-   * Saves an event and keeps its hours in step, like Office Puzzle: a timed session,
-   * assessment, meeting or admin block becomes an entry in Hours, and a supervision becomes a
-   * supervision meeting. Moving, resizing or editing the event updates that entry; changing it
-   * to a type that isn't logged removes it.
+   * Saves an event and keeps its hours in step, like Office Puzzle: every timed work event
+   * (session, assessment, parent training, meeting, admin, supervision) becomes an entry in
+   * Hours, and a supervision also becomes a supervision meeting. Moving, resizing or editing the
+   * event updates them; changing it to a type that isn't logged removes them.
    */
   const persist = async (e: EventDraft): Promise<CalendarEvent> => {
-    const target = logTarget(e).what
+    const plan = logPlan(e, { clients, companies: data.companies, supervisees })
     const hours = durationHours(e)
     let hour_entry_id = e.hour_entry_id
     let supervision_session_id = e.supervision_session_id
 
-    if ((target === 'clinical' || target === 'admin') && hours > 0 && e.company_id) {
+    if (plan.hourKind && hours > 0 && plan.companyId) {
       const existing = hour_entries.find((x) => x.id === hour_entry_id)
       const he = await save('hour_entries', {
         id: existing?.id,
         date: e.date,
-        company_id: e.company_id,
+        company_id: plan.companyId,
         client_id: e.client_id,
-        kind: target,
+        kind: plan.hourKind,
         hours,
         note: e.title,
       })
@@ -148,7 +149,7 @@ export function CalendarScreen() {
       hour_entry_id = null
     }
 
-    if (target === 'supervision' && hours > 0 && e.supervisee_id) {
+    if (plan.supervision && hours > 0 && e.supervisee_id) {
       const existing = supervision_sessions.find((x) => x.id === supervision_session_id)
       const s = await save('supervision_sessions', {
         id: existing?.id,
@@ -166,18 +167,22 @@ export function CalendarScreen() {
       supervision_session_id = null
     }
 
-    return save('events', { ...e, hour_entry_id, supervision_session_id })
+    // Remember the company that was used, so the event shows it too.
+    return save('events', { ...e, company_id: e.company_id ?? plan.companyId, hour_entry_id, supervision_session_id })
   }
 
-  // Events created before hours were logged automatically: link them once.
+  // Events saved before their hours were logged (older versions, or a company / supervisee
+  // that was missing at the time): log what's still missing once, when the calendar opens.
   const backfilled = useRef(false)
   useEffect(() => {
     if (backfilled.current) return
     backfilled.current = true
     for (const e of events) {
-      if (e.hour_entry_id || e.supervision_session_id || !durationHours(e)) continue
-      const tgt = logTarget(e)
-      if (tgt.what && !tgt.missing) void persist(e)
+      if (!durationHours(e)) continue
+      const plan = logPlan(e, { clients, companies: data.companies, supervisees })
+      const needsHours = plan.hourKind && plan.companyId && !e.hour_entry_id
+      const needsSupervision = plan.supervision && e.supervisee_id && !e.supervision_session_id
+      if (needsHours || needsSupervision) void persist(e)
     }
     // Runs once when the calendar opens.
   }, [])

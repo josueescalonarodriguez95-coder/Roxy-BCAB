@@ -23,6 +23,7 @@ export function DashboardScreen() {
   const monthHours = hour_entries.filter((h) => inRange(h.date, month.start, month.end))
   const clinical = monthHours.filter((h) => h.kind === 'clinical').reduce((s, h) => s + h.hours, 0)
   const admin = monthHours.filter((h) => h.kind === 'admin').reduce((s, h) => s + h.hours, 0)
+  const supHours = monthHours.filter((h) => h.kind === 'supervision').reduce((s, h) => s + h.hours, 0)
   const expected =
     sumEarnings(earningsByCompany(companies, hour_entries, month)).total +
     supervisionEarnings(supervisees, supervision_sessions, month, today()).reduce((sum, e) => sum + e.total, 0)
@@ -60,8 +61,8 @@ export function DashboardScreen() {
       <div className="stats">
         <button className="stat tint-blue" onClick={() => go('hours')}>
           <span className="stat-label">{t('dash.hoursMonth')}</span>
-          <span className="stat-value">{num(clinical + admin)}</span>
-          <span className="stat-sub">{t('dash.hoursSplit', { clinical: num(clinical), admin: num(admin) })}</span>
+          <span className="stat-value">{num(clinical + admin + supHours)}</span>
+          <span className="stat-sub">{t('dash.hoursSplit', { clinical: num(clinical), admin: num(admin), sup: num(supHours) })}</span>
         </button>
         <button className="stat tint-mint" onClick={() => go('earnings')}>
           <span className="stat-label">{t('dash.expectedMonth')}</span>
