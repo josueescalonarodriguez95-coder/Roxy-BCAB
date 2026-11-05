@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { initialRange, RangePicker, resolveRange } from '../components/RangePicker'
 import { Badge, Empty, Field, Modal, PageHeader, Segmented, num as parseNum } from '../components/ui'
 import { useData } from '../data/DataContext'
-import type { HourEntry, HourKind } from '../data/types'
+import { SERVICE_KINDS, type HourEntry, type HourKind } from '../data/types'
 import { useI18n } from '../i18n'
 import { inRange, today } from '../lib/dates'
 
@@ -25,7 +25,7 @@ export function HoursScreen() {
     date: today(),
     company_id: companies.find((c) => c.active)?.id ?? '',
     client_id: null,
-    kind: 'clinical',
+    kind: 'session',
     hours: 0,
     note: '',
   })
@@ -71,7 +71,7 @@ export function HoursScreen() {
                   </td>
                   <td>{h.client_id ? clientName(clients.find((c) => c.id === h.client_id)) : '—'}</td>
                   <td>
-                    <Badge tone={h.kind === 'clinical' ? 'ok' : h.kind === 'supervision' ? 'notice' : 'muted'}>{t(`hours.${h.kind}`)}</Badge>
+                    <Badge tone={h.kind === 'supervision' ? 'notice' : h.kind === 'admin' ? 'muted' : 'ok'}>{t(`hours.${h.kind}`)}</Badge>
                   </td>
                   <td className="num">{num(h.hours)}</td>
                 </tr>
@@ -116,7 +116,7 @@ export function HourForm({
   onDelete?: () => Promise<void>
 }) {
   const { t } = useI18n()
-  const { companies, clients, clientName } = useData()
+  const { companies, clients, clientName, profile } = useData()
   const [d, setD] = useState(draft)
   const [hours, setHours] = useState(draft.hours ? String(draft.hours) : '')
   const [busy, setBusy] = useState(false)
@@ -139,10 +139,7 @@ export function HourForm({
         }}
       >
         <Segmented<HourKind>
-          options={[
-            { value: 'clinical', label: t('hours.clinical') },
-            { value: 'admin', label: t('hours.admin') },
-          ]}
+          options={SERVICE_KINDS.filter((k) => k !== 'supervision' || profile.credential !== 'RBT').map((k) => ({ value: k, label: t(`hours.${k}`) }))}
           value={d.kind}
           onChange={(kind) => setD({ ...d, kind })}
         />

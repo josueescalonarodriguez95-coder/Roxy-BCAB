@@ -3,9 +3,9 @@ import type { CalendarEvent, Client, Company, HourKind, Supervisee } from '../da
 /**
  * What a calendar event logs automatically.
  *
- * Every work event lands in Hours. Supervision also lands in the Supervision tab (for the BACB
- * 5% count); its Hours entry uses the "supervision" kind, which is paid through the supervisee's
- * rate, so it isn't counted twice in Earnings.
+ * Every service (session, assessment, parent training, supervision) lands in Hours with its own
+ * type, paid at the company's hourly rate. Supervision also lands in the Supervision tab, for the
+ * BACB 5% count.
  */
 export interface LogPlan {
   hourKind: HourKind | null
@@ -16,12 +16,13 @@ export interface LogPlan {
 }
 
 const HOUR_KIND: Partial<Record<CalendarEvent['kind'], HourKind>> = {
-  session: 'clinical',
-  assessment: 'clinical',
-  parent_training: 'clinical',
+  session: 'session',
+  assessment: 'assessment',
+  parent_training: 'parent_training',
+  supervision: 'supervision',
+  // Event types from older versions that still log their hours.
   meeting: 'admin',
   admin: 'admin',
-  supervision: 'supervision',
 }
 
 export function logPlan(

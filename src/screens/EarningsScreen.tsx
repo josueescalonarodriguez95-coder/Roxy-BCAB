@@ -2,19 +2,20 @@ import { useState } from 'react'
 import { initialRange, RangePicker, resolveRange } from '../components/RangePicker'
 import { Badge, Empty, Field, Modal, PageHeader, num as parseNum } from '../components/ui'
 import { useData } from '../data/DataContext'
-import type { Payment } from '../data/types'
+import { SERVICE_KINDS, type HourKind, type Payment } from '../data/types'
 import { useI18n } from '../i18n'
 import { addDays, inRange, today, type DateRange } from '../lib/dates'
 import { earningsByCompany, paymentRemaining, paymentStatus, sumEarnings, sumPayments } from '../lib/earnings'
-import { supervisionEarnings } from '../lib/supervision'
 
 type Draft = Omit<Payment, 'id'> & { id?: string }
+
+const round1 = (n: number) => Math.round(n * 100) / 100
 
 const STATUS_TONE = { confirmed: 'ok', partial: 'attention', pending: 'notice' } as const
 
 export function EarningsScreen() {
   const { t, money, num, date } = useI18n()
-  const { companies, hour_entries, payments, profile, supervisees, supervision_sessions, save, remove, companyName } = useData()
+  const { companies, hour_entries, payments, profile, save, remove, companyName } = useData()
   const [range, setRange] = useState(() => initialRange('month'))
   const [companyFilter, setCompanyFilter] = useState('')
   const [draft, setDraft] = useState<Draft | null>(null)
@@ -23,12 +24,10 @@ export function EarningsScreen() {
   const visibleCompanies = companyFilter ? companies.filter((c) => c.id === companyFilter) : companies
   const earnings = earningsByCompany(visibleCompanies, hour_entries, r)
   const totals = sumEarnings(earnings)
-  const supEarnings = supervisionEarnings(
-    companyFilter ? supervisees.filter((s) => s.company_id === companyFilter) : supervisees,
-    supervision_sessions,
-    r,
-    companies,
-  )
+  // One column per service, plus "Other" only when there are hours saved by older versions.
+  const otherHours = round1((totals.byKind.clinical ?? 0) + (totals.byKind.admin ?? 0))
+  const kindsShown = SERVICE_KINDS
+  const other = (e: { byKind: Partial<Record<HourKind, number>> }) => (e.byKind.clinical ?? 0) + (e.byKind.admin ?? 0)
 
   // A payment belongs to the range where its pay period ends.
   const pays = payments
@@ -85,10 +84,14 @@ export function EarningsScreen() {
               <thead>
                 <tr>
                   <th>{t('common.company')}</th>
-                  <th className="num">{t('earnings.clinicalHrs')}</th>
-                  <th className="num">{t('earnings.clinicalEarn')}</th>
-                  <th className="num">{t('earnings.adminHrs')}</th>
-                  <th className="num">{t('earnings.adminEarn')}</th>
+                  {kindsShown.map((k) => (
+                    <th key={k} className="num">
+                      {t(`hours.${k}`)}
+                    </th>
+                  ))}
+                  {otherHours > 0 && <th className="num">{t('earnings.other')}</th>}
+                  <th className="num">{t('earnings.hoursCol')}</th>
+                  <th className="num">{t('earnings.rate')}</th>
                   <th className="num">{t('earnings.totalExpected')}</th>
                   <th />
                 </tr>
@@ -100,10 +103,14 @@ export function EarningsScreen() {
                       <span className="dot" style={{ background: e.company.color }} />
                       {e.company.name}
                     </td>
-                    <td className="num">{num(e.clinicalHours)}</td>
-                    <td className="num">{money(e.clinicalEarnings)}</td>
-                    <td className="num">{num(e.adminHours)}</td>
-                    <td className="num">{money(e.adminEarnings)}</td>
+                    {kindsShown.map((k) => (
+                      <td key={k} className="num">
+                        {e.byKind[k] ? num(e.byKind[k]!) : '—'}
+                      </td>
+                    ))}
+                    {otherHours > 0 && <td className="num">{other(e) ? num(other(e)) : '—'}</td>}
+                    <td className="num strong">{num(e.hours)}</td>
+                    <td className="num">{money(e.rate)}</td>
                     <td className="num strong">{money(e.total)}</td>
                     <td className="num">
                       <button className="btn small" onClick={() => setDraft({ ...newPayment(e.company.id), expected: e.total })}>
@@ -113,67 +120,28 @@ export function EarningsScreen() {
                   </tr>
                 ))}
               </tbody>
-              <tfoot>
-                <tr>
-                  <td>{t('common.total')}</td>
-                  <td className="num">{num(totals.clinicalHours)}</td>
-                  <td className="num">{money(totals.clinicalEarnings)}</td>
-                  <td className="num">{num(totals.adminHours)}</td>
-                  <td className="num">{money(totals.adminEarnings)}</td>
-                  <td className="num">{money(totals.total)}</td>
-                  <td />
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-        )}
-        <p className="muted small">{t('earnings.formula')}</p>
-      </section>
-
-      {supEarnings.length > 0 && (
-        <section className="section">
-          <h2>{t('earnings.supervision')}</h2>
-          <div className="card table-card">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>{t('sup.name')}</th>
-                  <th className="num">{t('earnings.supHours')}</th>
-                  <th className="num">{t('earnings.rate')}</th>
-                  <th className="num">{t('earnings.totalExpected')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {supEarnings.map((e) => (
-                  <tr key={e.supervisee.id}>
-                    <td>
-                      <span className="dot" style={{ background: e.supervisee.color }} />
-                      {e.supervisee.name}
-                    </td>
-                    <td className="num">{num(e.hours)}</td>
-                    <td className="num" title={e.fromCompany ? t('earnings.rateFromCompany') : undefined}>
-                      {money(e.rate)}
-                      {e.fromCompany && <span className="muted small"> · {t('earnings.companyRate')}</span>}
-                    </td>
-                    <td className="num strong">{money(e.total)}</td>
-                  </tr>
-                ))}
-              </tbody>
-              {supEarnings.length > 1 && (
+              {earnings.length > 1 && (
                 <tfoot>
                   <tr>
                     <td>{t('common.total')}</td>
-                    <td className="num">{num(supEarnings.reduce((sum, e) => sum + e.hours, 0))}</td>
+                    {kindsShown.map((k) => (
+                      <td key={k} className="num">
+                        {totals.byKind[k] ? num(totals.byKind[k]!) : '—'}
+                      </td>
+                    ))}
+                    {otherHours > 0 && <td className="num">{num(otherHours)}</td>}
+                    <td className="num">{num(totals.hours)}</td>
                     <td />
-                    <td className="num">{money(supEarnings.reduce((sum, e) => sum + e.total, 0))}</td>
+                    <td className="num">{money(totals.total)}</td>
+                    <td />
                   </tr>
                 </tfoot>
               )}
             </table>
           </div>
-          <p className="muted small">{t('earnings.supervisionHelp')}</p>
-        </section>
-      )}
+        )}
+        <p className="muted small">{t('earnings.formula')}</p>
+      </section>
 
       <section className="section">
         <h2>{t('earnings.payments')}</h2>

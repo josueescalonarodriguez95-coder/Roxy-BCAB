@@ -6,7 +6,6 @@ import { useWarnings } from '../data/useWarnings'
 import { useI18n } from '../i18n'
 import { inRange, rangeFor, today } from '../lib/dates'
 import { earningsByCompany, sumEarnings, sumPayments } from '../lib/earnings'
-import { supervisionEarnings } from '../lib/supervision'
 import { useGo } from '../nav'
 import { KIND_COLORS, sortEvents } from '../lib/calendar'
 import { addDays } from '../lib/dates'
@@ -14,19 +13,17 @@ import { HourForm } from './HoursScreen'
 
 export function DashboardScreen() {
   const { t, money, num, fmt, time } = useI18n()
-  const { profile, companies, clients, hour_entries, payments, todos, supervisees, supervision_sessions, events, save } = useData()
+  const { profile, companies, clients, hour_entries, payments, todos, events, save } = useData()
   const warnings = useWarnings()
   const go = useGo()
   const [logging, setLogging] = useState(false)
 
   const month = rangeFor('month', today())
   const monthHours = hour_entries.filter((h) => inRange(h.date, month.start, month.end))
-  const clinical = monthHours.filter((h) => h.kind === 'clinical').reduce((s, h) => s + h.hours, 0)
-  const admin = monthHours.filter((h) => h.kind === 'admin').reduce((s, h) => s + h.hours, 0)
+  const totalHours = monthHours.reduce((s, h) => s + h.hours, 0)
   const supHours = monthHours.filter((h) => h.kind === 'supervision').reduce((s, h) => s + h.hours, 0)
-  const expected =
-    sumEarnings(earningsByCompany(companies, hour_entries, month)).total +
-    supervisionEarnings(supervisees, supervision_sessions, month, companies).reduce((sum, e) => sum + e.total, 0)
+  // Every hour she logged this month × the company's hourly rate.
+  const expected = sumEarnings(earningsByCompany(companies, hour_entries, month)).total
   const pending = sumPayments(payments).remaining
   const openTodos = todos.filter((td) => !td.done)
   const name = profile.display_name.trim().split(' ')[0]
@@ -61,8 +58,8 @@ export function DashboardScreen() {
       <div className="stats">
         <button className="stat tint-blue" onClick={() => go('hours')}>
           <span className="stat-label">{t('dash.hoursMonth')}</span>
-          <span className="stat-value">{num(clinical + admin + supHours)}</span>
-          <span className="stat-sub">{t('dash.hoursSplit', { clinical: num(clinical), admin: num(admin), sup: num(supHours) })}</span>
+          <span className="stat-value">{num(totalHours)}</span>
+          <span className="stat-sub">{t('dash.hoursSplit', { clients: num(totalHours - supHours), sup: num(supHours) })}</span>
         </button>
         <button className="stat tint-mint" onClick={() => go('earnings')}>
           <span className="stat-label">{t('dash.expectedMonth')}</span>
@@ -152,7 +149,7 @@ export function DashboardScreen() {
             date: today(),
             company_id: companies.find((c) => c.active)?.id ?? companies[0].id,
             client_id: null,
-            kind: 'clinical',
+            kind: 'session',
             hours: 0,
             note: '',
           }}

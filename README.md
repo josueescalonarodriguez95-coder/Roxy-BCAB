@@ -39,13 +39,13 @@ Authentication → URL Configuration → Site URL, pegar el enlace que dio Verce
 
 | Pestaña | Qué hace |
 |---|---|
-| Calendario | Vistas de mes, semana, día y agenda. Arrastra en la cuadrícula para crear, arrastra un evento para moverlo y su borde de abajo para cambiar la duración. Eventos que se repiten, colores por tipo, filtros, y fechas de autorización, pagos y supervisión de las otras pestañas. Todo evento de trabajo con horario (sesión, evaluación, parent training, reunión, administrativo y supervisión) se agrega solo a Horas, y la supervisión además a Supervisión (regla del 5%); mover, estirar o borrar el evento los actualiza. Atajos: T, M, S/W, D, A, ← →, N |
+| Calendario | Vistas de mes, semana, día y agenda. Arrastra en la cuadrícula para crear, arrastra un evento para moverlo y su borde de abajo para cambiar la duración. Eventos que se repiten, colores por tipo, filtros, y fechas de autorización, pagos y supervisión de las otras pestañas. Los 4 tipos de servicio (sesión, evaluación, parent training y supervisión) con horario se agregan solos a Horas, y la supervisión además a Supervisión (regla del 5%); mover, estirar o borrar el evento los actualiza. Atajos: T, M, S/W, D, A, ← →, N |
 | Inicio | Horas y ganancias del mes, saldo pendiente, advertencias y tareas |
 | Clientes | Iniciales o nombre, empresa, fechas de autorización |
 | Horas | Registro de horas clínicas y administrativas pagadas |
-| Empresas | Agencias con su tarifa clínica y administrativa |
+| Empresas | Agencias con su tarifa por hora (una sola tarifa para todas las horas) |
 | Supervisión | RBTs y estudiantes de fieldwork: horas del mes, supervisión dada vs. requerida (5% / 10%), contactos, observación con cliente, % grupal, próxima reunión y avance de fieldwork (2,000 / 1,500 h). No aparece si la credencial es RBT; fieldwork sólo para BCBA |
-| Ganancias | Esperado por empresa (horas × tarifa), ganancias por supervisión (horas × tarifa del supervisado), pagos recibidos, saldo, ahorro para impuestos |
+| Ganancias | Horas por tipo de servicio × la tarifa por hora de la empresa, pagos recibidos, saldo, ahorro para impuestos |
 | Pendientes | Libreta de tareas |
 | Advertencias | Sin horas en el mes, autorizaciones por vencer, pagos atrasados, fecha de certificación / primer año BCBA, contrato de supervisión faltante, horas del mes anterior sin registrar, requisito de supervisión no cumplido, sin próxima reunión |
 | Ajustes | Nombre, credencial, fecha de certificación, idioma, % de impuestos |

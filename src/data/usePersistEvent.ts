@@ -69,7 +69,7 @@ export function usePersistEvent() {
  * Hours, Earnings and the dashboard are always complete.
  */
 export function useEventBackfill() {
-  const { events, clients, companies, supervisees } = useData()
+  const { events, clients, companies, supervisees, hour_entries } = useData()
   const persist = usePersistEvent()
   // Events already being logged, so a slow save is never started twice.
   const inFlight = useRef(new Set<string>())
@@ -80,12 +80,15 @@ export function useEventBackfill() {
       const plan = logPlan(e, { clients, companies, supervisees })
       const needsHours = plan.hourKind && plan.companyId && !e.hour_entry_id
       const needsSupervision = plan.supervision && e.supervisee_id && !e.supervision_session_id
-      if (!needsHours && !needsSupervision) continue
+      // Entries saved as "clinical" by older versions get their real type (session, assessment…).
+      const linked = hour_entries.find((h) => h.id === e.hour_entry_id)
+      const needsKind = linked && plan.hourKind && linked.kind !== plan.hourKind
+      if (!needsHours && !needsSupervision && !needsKind) continue
       inFlight.current.add(e.id)
       void persist(e).catch(() => {
         // Leave it in inFlight: retrying in a loop would hammer the database. It is retried on
         // the next app load.
       })
     }
-  }, [events, clients, companies, supervisees, persist])
+  }, [events, clients, companies, supervisees, hour_entries, persist])
 }

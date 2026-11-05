@@ -1,4 +1,4 @@
-import type { Company, ISODate, Supervisee, SuperviseeMonth, SupervisionSession } from '../data/types'
+import type { ISODate, Supervisee, SuperviseeMonth, SupervisionSession } from '../data/types'
 import { fromISO, toISO } from './dates'
 
 /**
@@ -153,33 +153,4 @@ export function nextSession(s: Supervisee, sessions: SupervisionSession[], asOf:
   return sessions
     .filter((x) => x.supervisee_id === s.id && x.date > asOf)
     .sort((a, b) => a.date.localeCompare(b.date))[0]
-}
-
-/**
- * Supervision earnings in a range: supervision hours (delivered or scheduled, like the rest of
- * the month's expected earnings) × the supervisee's rate. A supervisee with rate 0 is paid by
- * the company, so the company's hourly rate is used instead.
- */
-export function supervisionEarnings(
-  supervisees: Supervisee[],
-  sessions: SupervisionSession[],
-  range: { start: ISODate; end: ISODate },
-  companies: Company[],
-) {
-  return supervisees
-    .map((s) => {
-      const hours = round2(
-        sessions
-          .filter((x) => x.supervisee_id === s.id && x.date >= range.start && x.date <= range.end)
-          .reduce((sum, x) => sum + x.hours, 0),
-      )
-      // The supervisee's company, or the only active company when none was picked.
-      const active = companies.filter((c) => c.active)
-      const company = companies.find((c) => c.id === s.company_id) ?? (active.length === 1 ? active[0] : undefined)
-      const companyRate = company?.clinical_rate ?? 0
-      const fromCompany = !(s.rate > 0)
-      const rate = fromCompany ? companyRate : s.rate
-      return { supervisee: s, hours, rate, fromCompany, total: round2(hours * rate) }
-    })
-    .filter((r) => r.hours > 0)
 }

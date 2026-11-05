@@ -39,11 +39,6 @@ export function CompaniesScreen() {
               <span className="muted">
                 {t('companies.rateShort')}: {money(c.clinical_rate)}/h
               </span>
-              {c.admin_rate > 0 && c.admin_rate !== c.clinical_rate && (
-                <span className="muted small">
-                  {t('companies.adminShort')}: {money(c.admin_rate)}/h
-                </span>
-              )}
               <span className="muted">{t(`schedule.${c.pay_schedule}`)}</span>
               <span className="row-gap">
                 <Badge tone={c.active ? 'ok' : 'muted'}>{t(c.active ? 'common.active' : 'common.inactive')}</Badge>
@@ -98,7 +93,6 @@ function CompanyForm({
   const { t } = useI18n()
   const [d, setD] = useState(draft)
   const [clinical, setClinical] = useState(draft.clinical_rate ? String(draft.clinical_rate) : '')
-  const [admin, setAdmin] = useState(draft.admin_rate ? String(draft.admin_rate) : '')
   const [busy, setBusy] = useState(false)
 
   return (
@@ -109,7 +103,7 @@ function CompanyForm({
           e.preventDefault()
           setBusy(true)
           try {
-            await onSave({ ...d, name: d.name.trim(), clinical_rate: num(clinical), admin_rate: num(admin) })
+            await onSave({ ...d, name: d.name.trim(), clinical_rate: num(clinical), admin_rate: 0 })
           } finally {
             setBusy(false)
           }
@@ -120,9 +114,6 @@ function CompanyForm({
         </Field>
         <Field label={t('companies.clinicalRate')} hint={t('companies.rateHint')}>
           <input required inputMode="decimal" value={clinical} onChange={(e) => setClinical(e.target.value)} placeholder="76.00" />
-        </Field>
-        <Field label={t('companies.adminRate')} hint={t('companies.adminRateHint')}>
-          <input inputMode="decimal" value={admin} onChange={(e) => setAdmin(e.target.value)} placeholder={clinical || '0.00'} />
         </Field>
         <Field label={t('companies.paySchedule')}>
           <select value={d.pay_schedule} onChange={(e) => setD({ ...d, pay_schedule: e.target.value as PaySchedule })}>

@@ -297,7 +297,6 @@ function SuperviseeForm({
   const { t } = useI18n()
   const { companies, clients, clientName } = useData()
   const [d, setD] = useState(draft)
-  const [rate, setRate] = useState(draft.rate ? String(draft.rate) : '')
   const [busy, setBusy] = useState(false)
   const pickable = clients.filter((c) => c.active || d.client_ids.includes(c.id))
 
@@ -311,7 +310,7 @@ function SuperviseeForm({
           try {
             // Drop ids of clients that were deleted since they were assigned.
             const client_ids = d.client_ids.filter((id) => clients.some((c) => c.id === id))
-            await onSave({ ...d, name: d.name.trim(), rate: parseNum(rate), client_ids })
+            await onSave({ ...d, name: d.name.trim(), client_ids })
           } finally {
             setBusy(false)
           }
@@ -376,9 +375,6 @@ function SuperviseeForm({
             <input type="date" value={d.contract_date ?? ''} onChange={(e) => setD({ ...d, contract_date: e.target.value || null })} />
           </Field>
         </div>
-        <Field label={t('sup.rate')} hint={t('sup.rateHelp')}>
-          <input inputMode="decimal" value={rate} onChange={(e) => setRate(e.target.value)} placeholder="0.00" />
-        </Field>
         <Field label={t('companies.color')}>
           <div className="swatches">
             {COLORS.map((c) => (

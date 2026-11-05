@@ -4,8 +4,11 @@ export type ISODate = string
 export type Credential = 'BCBA' | 'BCaBA' | 'RBT'
 export type Lang = 'en' | 'es'
 export type PaySchedule = 'weekly' | 'biweekly' | 'semimonthly' | 'monthly'
-/** 'supervision' hours come from the calendar; they're paid through the supervisee's rate. */
-export type HourKind = 'clinical' | 'admin' | 'supervision'
+/** The four services she bills. Every hour of any of them is paid at the company's hourly rate. */
+export type ServiceKind = 'session' | 'assessment' | 'parent_training' | 'supervision'
+export const SERVICE_KINDS: ServiceKind[] = ['session', 'assessment', 'parent_training', 'supervision']
+/** 'clinical' and 'admin' are entries saved by older versions of the app. */
+export type HourKind = ServiceKind | 'clinical' | 'admin'
 
 export interface Profile {
   id: string
@@ -111,7 +114,8 @@ export interface SuperviseeMonth {
 }
 
 export type EventKind = 'session' | 'supervision' | 'assessment' | 'parent_training' | 'meeting' | 'admin' | 'personal' | 'other'
-export const EVENT_KINDS: EventKind[] = ['session', 'supervision', 'assessment', 'parent_training', 'meeting', 'admin', 'personal', 'other']
+/** Types offered in the calendar. meeting / admin / personal / other only remain for events saved before. */
+export const EVENT_KINDS: EventKind[] = SERVICE_KINDS
 
 export interface CalendarEvent {
   id: string

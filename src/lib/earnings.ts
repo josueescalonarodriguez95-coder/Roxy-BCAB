@@ -1,60 +1,41 @@
-import type { Company, HourEntry, Payment } from '../data/types'
+import type { Company, HourEntry, HourKind, Payment } from '../data/types'
 import { inRange, type DateRange } from './dates'
 
 export interface CompanyEarnings {
   company: Company
-  clinicalHours: number
-  clinicalEarnings: number
-  adminHours: number
-  adminEarnings: number
+  /** Hours per service type (session, assessment, parent_training, supervision, …). */
+  byKind: Partial<Record<HourKind, number>>
+  hours: number
+  rate: number
   total: number
 }
 
 const round2 = (n: number) => Math.round(n * 100) / 100
 
 /**
- * Most agencies pay one hourly rate for every hour (sessions, meetings, admin, supervision).
- * The admin rate is only an optional override: left at 0, admin hours earn the hourly rate.
- */
-export function adminRateOf(c: Company): number {
-  return c.admin_rate > 0 ? c.admin_rate : c.clinical_rate
-}
-
-/**
- * Expected earnings per company in a range: hours × the company's hourly rate.
- * Companies with no hours in the range are left out.
+ * Expected earnings per company in a range: every hour she logged (any service) × the company's
+ * hourly rate. Companies with no hours in the range are left out.
  */
 export function earningsByCompany(companies: Company[], hours: HourEntry[], range: DateRange): CompanyEarnings[] {
   return companies
     .map((company) => {
       const rows = hours.filter((h) => h.company_id === company.id && inRange(h.date, range.start, range.end))
-      const clinicalHours = rows.filter((h) => h.kind === 'clinical').reduce((s, h) => s + h.hours, 0)
-      const adminHours = rows.filter((h) => h.kind === 'admin').reduce((s, h) => s + h.hours, 0)
-      const clinicalEarnings = round2(clinicalHours * company.clinical_rate)
-      const adminEarnings = round2(adminHours * adminRateOf(company))
-      return {
-        company,
-        clinicalHours,
-        clinicalEarnings,
-        adminHours,
-        adminEarnings,
-        total: round2(clinicalEarnings + adminEarnings),
-      }
+      const byKind: Partial<Record<HourKind, number>> = {}
+      for (const h of rows) byKind[h.kind] = round2((byKind[h.kind] ?? 0) + h.hours)
+      const total_hours = round2(rows.reduce((s, h) => s + h.hours, 0))
+      return { company, byKind, hours: total_hours, rate: company.clinical_rate, total: round2(total_hours * company.clinical_rate) }
     })
-    .filter((e) => e.clinicalHours > 0 || e.adminHours > 0)
+    .filter((e) => e.hours > 0)
 }
 
 export function sumEarnings(rows: CompanyEarnings[]) {
-  return rows.reduce(
-    (acc, r) => ({
-      clinicalHours: acc.clinicalHours + r.clinicalHours,
-      clinicalEarnings: round2(acc.clinicalEarnings + r.clinicalEarnings),
-      adminHours: acc.adminHours + r.adminHours,
-      adminEarnings: round2(acc.adminEarnings + r.adminEarnings),
-      total: round2(acc.total + r.total),
-    }),
-    { clinicalHours: 0, clinicalEarnings: 0, adminHours: 0, adminEarnings: 0, total: 0 },
-  )
+  const byKind: Partial<Record<HourKind, number>> = {}
+  for (const r of rows) for (const [k, v] of Object.entries(r.byKind)) byKind[k as HourKind] = round2((byKind[k as HourKind] ?? 0) + (v ?? 0))
+  return {
+    byKind,
+    hours: round2(rows.reduce((s, r) => s + r.hours, 0)),
+    total: round2(rows.reduce((s, r) => s + r.total, 0)),
+  }
 }
 
 export type PaymentStatus = 'confirmed' | 'partial' | 'pending'
