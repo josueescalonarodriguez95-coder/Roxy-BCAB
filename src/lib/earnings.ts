@@ -13,7 +13,15 @@ export interface CompanyEarnings {
 const round2 = (n: number) => Math.round(n * 100) / 100
 
 /**
- * Expected earnings per company in a range: hours × the rate stored on each company.
+ * Most agencies pay one hourly rate for every hour (sessions, meetings, admin, supervision).
+ * The admin rate is only an optional override: left at 0, admin hours earn the hourly rate.
+ */
+export function adminRateOf(c: Company): number {
+  return c.admin_rate > 0 ? c.admin_rate : c.clinical_rate
+}
+
+/**
+ * Expected earnings per company in a range: hours × the company's hourly rate.
  * Companies with no hours in the range are left out.
  */
 export function earningsByCompany(companies: Company[], hours: HourEntry[], range: DateRange): CompanyEarnings[] {
@@ -23,7 +31,7 @@ export function earningsByCompany(companies: Company[], hours: HourEntry[], rang
       const clinicalHours = rows.filter((h) => h.kind === 'clinical').reduce((s, h) => s + h.hours, 0)
       const adminHours = rows.filter((h) => h.kind === 'admin').reduce((s, h) => s + h.hours, 0)
       const clinicalEarnings = round2(clinicalHours * company.clinical_rate)
-      const adminEarnings = round2(adminHours * company.admin_rate)
+      const adminEarnings = round2(adminHours * adminRateOf(company))
       return {
         company,
         clinicalHours,

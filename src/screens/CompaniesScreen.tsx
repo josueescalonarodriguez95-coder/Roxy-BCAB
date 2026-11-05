@@ -37,11 +37,13 @@ export function CompaniesScreen() {
             <button key={c.id} className="card person-card" style={{ borderTopColor: c.color }} onClick={() => setDraft(c)}>
               <strong className="card-title">{c.name}</strong>
               <span className="muted">
-                {t('companies.clinicalRate')}: {money(c.clinical_rate)}
+                {t('companies.rateShort')}: {money(c.clinical_rate)}/h
               </span>
-              <span className="muted">
-                {t('companies.adminRate')}: {money(c.admin_rate)}
-              </span>
+              {c.admin_rate > 0 && c.admin_rate !== c.clinical_rate && (
+                <span className="muted small">
+                  {t('companies.adminShort')}: {money(c.admin_rate)}/h
+                </span>
+              )}
               <span className="muted">{t(`schedule.${c.pay_schedule}`)}</span>
               <span className="row-gap">
                 <Badge tone={c.active ? 'ok' : 'muted'}>{t(c.active ? 'common.active' : 'common.inactive')}</Badge>
@@ -116,14 +118,12 @@ function CompanyForm({
         <Field label={t('companies.name')}>
           <input required autoFocus value={d.name} onChange={(e) => setD({ ...d, name: e.target.value })} />
         </Field>
-        <div className="form-row">
-          <Field label={t('companies.clinicalRate')}>
-            <input inputMode="decimal" value={clinical} onChange={(e) => setClinical(e.target.value)} placeholder="0.00" />
-          </Field>
-          <Field label={t('companies.adminRate')}>
-            <input inputMode="decimal" value={admin} onChange={(e) => setAdmin(e.target.value)} placeholder="0.00" />
-          </Field>
-        </div>
+        <Field label={t('companies.clinicalRate')} hint={t('companies.rateHint')}>
+          <input required inputMode="decimal" value={clinical} onChange={(e) => setClinical(e.target.value)} placeholder="76.00" />
+        </Field>
+        <Field label={t('companies.adminRate')} hint={t('companies.adminRateHint')}>
+          <input inputMode="decimal" value={admin} onChange={(e) => setAdmin(e.target.value)} placeholder={clinical || '0.00'} />
+        </Field>
         <Field label={t('companies.paySchedule')}>
           <select value={d.pay_schedule} onChange={(e) => setD({ ...d, pay_schedule: e.target.value as PaySchedule })}>
             {SCHEDULES.map((s) => (
