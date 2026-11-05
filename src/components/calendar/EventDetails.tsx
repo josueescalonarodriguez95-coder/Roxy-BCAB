@@ -7,8 +7,8 @@ import { colorOf, type DisplayEvent } from './types'
 
 export type DeleteScope = 'one' | 'following' | 'series'
 
-/** What "mark done" will log for this event, or why it can't. */
-export function doneTarget(e: DisplayEvent): { what: 'clinical' | 'admin' | 'supervision' | null; missing?: 'company' | 'supervisee' } {
+/** What this event logs automatically (Hours or Supervision), or what it still needs. */
+export function logTarget(e: Pick<DisplayEvent, 'kind' | 'company_id' | 'supervisee_id'>): { what: 'clinical' | 'admin' | 'supervision' | null; missing?: 'company' | 'supervisee' } {
   if (e.kind === 'supervision') return e.supervisee_id ? { what: 'supervision' } : { what: null, missing: 'supervisee' }
   const what = e.kind === 'session' || e.kind === 'assessment' ? 'clinical' : e.kind === 'meeting' || e.kind === 'admin' ? 'admin' : null
   if (!what) return { what: null }
@@ -61,8 +61,9 @@ export function EventDetails({
   }, [onClose])
 
   const client = clients.find((x) => x.id === e.client_id)
-  const target = doneTarget(e)
+  const target = logTarget(e)
   const hours = durationHours(e)
+  const logged = !!(e.hour_entry_id || e.supervision_session_id)
   const kindLabel = t(`cal.kind.${e.kind}`)
 
   return (
@@ -134,21 +135,23 @@ export function EventDetails({
               {t('cal.deleteSeries')}
             </button>
           </div>
-        ) : e.done ? (
-          <button className="btn block" onClick={onToggleDone}>
-            ↺ {t('cal.undoDone')}
-          </button>
         ) : (
           <>
-            <button className="btn primary block" disabled={!!target.missing} onClick={onToggleDone}>
-              ✓ {target.what ? t('cal.markDone') : t('cal.done')}
-            </button>
-            {target.what && hours > 0 && (
-              <p className="muted small pop-help">
-                {t('cal.markDoneHelp', { h: num(hours), what: t(target.what === 'clinical' ? 'cal.logClinical' : target.what === 'admin' ? 'cal.logAdmin' : 'cal.logSupervision') })}
+            {target.missing ? (
+              <p className="pop-log warn">{t(target.missing === 'company' ? 'cal.needCompany' : 'cal.needSupervisee')}</p>
+            ) : target.what && logged ? (
+              <p className="pop-log ok">
+                {t('cal.loggedAuto', {
+                  h: num(hours),
+                  what: t(target.what === 'clinical' ? 'cal.logClinical' : target.what === 'admin' ? 'cal.logAdmin' : 'cal.logSupervision'),
+                })}
               </p>
-            )}
-            {target.missing && <p className="muted small pop-help">{t(target.missing === 'company' ? 'cal.needCompany' : 'cal.needSupervisee')}</p>}
+            ) : target.what && !hours ? (
+              <p className="pop-log warn">{t('cal.needTime')}</p>
+            ) : null}
+            <button className={`btn block ${e.done ? '' : 'primary'}`} onClick={onToggleDone}>
+              {e.done ? `↺ ${t('cal.undoDone')}` : `✓ ${t('cal.markDoneSimple')}`}
+            </button>
           </>
         )}
       </div>

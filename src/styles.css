@@ -507,6 +507,10 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 .pop-info li:first-child { display: flex; gap: 6px; flex-wrap: wrap; }
 .pop-notes { white-space: pre-wrap; }
 .pop-help { margin: 8px 0 0; }
+.pop-log { margin: 0 0 10px; padding: 9px 12px; border-radius: 12px; font-size: 13px; line-height: 1.4; }
+.pop-log.ok { background: var(--ok-bg); color: var(--ok); }
+.pop-log.warn { background: var(--attention-bg); color: var(--attention); }
+.cal-badge { margin-left: 8px; font-size: 11px; }
 .pop-delete { display: flex; flex-direction: column; gap: 6px; }
 
 /* Event form extras */

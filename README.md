@@ -39,7 +39,7 @@ Authentication → URL Configuration → Site URL, pegar el enlace que dio Verce
 
 | Pestaña | Qué hace |
 |---|---|
-| Calendario | Vistas de mes, semana, día y agenda. Arrastra en la cuadrícula para crear, arrastra un evento para moverlo y su borde de abajo para cambiar la duración. Eventos que se repiten, colores por tipo, filtros, y fechas de autorización, pagos y supervisión de las otras pestañas. "Marcar hecho y registrar" pasa el evento a Horas o a Supervisión. Atajos: T, M, S/W, D, A, ← →, N |
+| Calendario | Vistas de mes, semana, día y agenda. Arrastra en la cuadrícula para crear, arrastra un evento para moverlo y su borde de abajo para cambiar la duración. Eventos que se repiten, colores por tipo, filtros, y fechas de autorización, pagos y supervisión de las otras pestañas. Las sesiones, evaluaciones, reuniones y bloques administrativos con horario se agregan solos a Horas, y las supervisiones a Supervisión; mover, estirar o borrar el evento los actualiza. Atajos: T, M, S/W, D, A, ← →, N |
 | Inicio | Horas y ganancias del mes, saldo pendiente, advertencias y tareas |
 | Clientes | Iniciales o nombre, empresa, fechas de autorización |
 | Horas | Registro de horas clínicas y administrativas pagadas |

@@ -10,7 +10,8 @@ type Draft = Omit<HourEntry, 'id'> & { id?: string }
 
 export function HoursScreen() {
   const { t, num, date } = useI18n()
-  const { hour_entries, companies, clients, save, remove, clientName, companyName } = useData()
+  const { hour_entries, companies, clients, events, save, remove, clientName, companyName } = useData()
+  const fromCalendar = new Set(events.map((e) => e.hour_entry_id).filter(Boolean))
   const [range, setRange] = useState(() => initialRange('week'))
   const [draft, setDraft] = useState<Draft | null>(null)
   const r = resolveRange(range)
@@ -60,7 +61,14 @@ export function HoursScreen() {
               {rows.map((h) => (
                 <tr key={h.id} className="clickable" onClick={() => setDraft(h)}>
                   <td>{date(h.date)}</td>
-                  <td>{companyName(h.company_id)}</td>
+                  <td>
+                    {companyName(h.company_id)}
+                    {fromCalendar.has(h.id) && (
+                      <span className="badge badge-notice cal-badge" title={t('hours.fromCalendarHelp')}>
+                        📅 {t('hours.fromCalendar')}
+                      </span>
+                    )}
+                  </td>
                   <td>{h.client_id ? clientName(clients.find((c) => c.id === h.client_id)) : '—'}</td>
                   <td>
                     <Badge tone={h.kind === 'clinical' ? 'ok' : 'muted'}>{t(h.kind === 'clinical' ? 'hours.clinical' : 'hours.admin')}</Badge>

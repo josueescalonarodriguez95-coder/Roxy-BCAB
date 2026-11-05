@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AgendaView } from '../components/calendar/AgendaView'
-import { doneTarget, EventDetails, type DeleteScope } from '../components/calendar/EventDetails'
+import { EventDetails, logTarget, type DeleteScope } from '../components/calendar/EventDetails'
 import { EventForm, type EventDraft } from '../components/calendar/EventForm'
 import { MiniMonth } from '../components/calendar/MiniMonth'
 import { MonthView } from '../components/calendar/MonthView'
@@ -119,6 +119,69 @@ export function CalendarScreen() {
     [],
   )
 
+  /**
+   * Saves an event and keeps its hours in step, like Office Puzzle: a timed session,
+   * assessment, meeting or admin block becomes an entry in Hours, and a supervision becomes a
+   * supervision meeting. Moving, resizing or editing the event updates that entry; changing it
+   * to a type that isn't logged removes it.
+   */
+  const persist = async (e: EventDraft): Promise<CalendarEvent> => {
+    const target = logTarget(e).what
+    const hours = durationHours(e)
+    let hour_entry_id = e.hour_entry_id
+    let supervision_session_id = e.supervision_session_id
+
+    if ((target === 'clinical' || target === 'admin') && hours > 0 && e.company_id) {
+      const existing = hour_entries.find((x) => x.id === hour_entry_id)
+      const he = await save('hour_entries', {
+        id: existing?.id,
+        date: e.date,
+        company_id: e.company_id,
+        client_id: e.client_id,
+        kind: target,
+        hours,
+        note: e.title,
+      })
+      hour_entry_id = he.id
+    } else if (hour_entry_id) {
+      if (hour_entries.some((x) => x.id === hour_entry_id)) await remove('hour_entries', hour_entry_id)
+      hour_entry_id = null
+    }
+
+    if (target === 'supervision' && hours > 0 && e.supervisee_id) {
+      const existing = supervision_sessions.find((x) => x.id === supervision_session_id)
+      const s = await save('supervision_sessions', {
+        id: existing?.id,
+        supervisee_id: e.supervisee_id,
+        date: e.date,
+        hours,
+        // Keep "group" if it was changed by hand in Supervision.
+        format: existing?.format ?? 'individual',
+        with_client: !!e.client_id,
+        note: e.title,
+      })
+      supervision_session_id = s.id
+    } else if (supervision_session_id) {
+      if (supervision_sessions.some((x) => x.id === supervision_session_id)) await remove('supervision_sessions', supervision_session_id)
+      supervision_session_id = null
+    }
+
+    return save('events', { ...e, hour_entry_id, supervision_session_id })
+  }
+
+  // Events created before hours were logged automatically: link them once.
+  const backfilled = useRef(false)
+  useEffect(() => {
+    if (backfilled.current) return
+    backfilled.current = true
+    for (const e of events) {
+      if (e.hour_entry_id || e.supervision_session_id || !durationHours(e)) continue
+      const tgt = logTarget(e)
+      if (tgt.what && !tgt.missing) void persist(e)
+    }
+    // Runs once when the calendar opens.
+  }, [])
+
   const h: CalHandlers = {
     onOpen: (e, anchor) => setOpen({ id: e.id, anchor }),
     onCreate: (d, start, end) => setDraft(newDraft(d, start, end)),
@@ -130,10 +193,10 @@ export function CalendarScreen() {
         patch.start_time = fromMin(start)
         patch.end_time = fromMin(start + len)
       }
-      void save('events', { ...e, ...patch })
+      void persist({ ...e, ...patch })
     },
     onResize: (e, end) => {
-      if (!e.overlay) void save('events', { ...e, end_time: fromMin(end) })
+      if (!e.overlay) void persist({ ...e, end_time: fromMin(end) })
     },
     onPickDay: (d) => {
       setDate(d)
@@ -141,34 +204,8 @@ export function CalendarScreen() {
     },
   }
 
-  const toggleDone = async (e: CalendarEvent) => {
-    if (e.done) {
-      // Undo: take back whatever was logged when it was marked done.
-      if (e.hour_entry_id && hour_entries.some((x) => x.id === e.hour_entry_id)) await remove('hour_entries', e.hour_entry_id)
-      if (e.supervision_session_id && supervision_sessions.some((x) => x.id === e.supervision_session_id))
-        await remove('supervision_sessions', e.supervision_session_id)
-      await save('events', { ...e, done: false, hour_entry_id: null, supervision_session_id: null })
-      return
-    }
-    const target = doneTarget(e).what
-    const hours = durationHours(e)
-    if (target === 'supervision' && e.supervisee_id) {
-      const s = await save('supervision_sessions', {
-        supervisee_id: e.supervisee_id,
-        date: e.date,
-        hours: hours || 1,
-        format: 'individual',
-        with_client: !!e.client_id,
-        note: e.title,
-      })
-      await save('events', { ...e, done: true, supervision_session_id: s.id })
-    } else if ((target === 'clinical' || target === 'admin') && e.company_id && hours > 0) {
-      const he = await save('hour_entries', { date: e.date, company_id: e.company_id, client_id: e.client_id, kind: target, hours, note: e.title })
-      await save('events', { ...e, done: true, hour_entry_id: he.id })
-    } else {
-      await save('events', { ...e, done: true })
-    }
-  }
+  // Hours are logged when the event is saved; "done" is just a check mark.
+  const toggleDone = (e: CalendarEvent) => save('events', { ...e, done: !e.done })
 
   const deleteEvent = async (e: CalendarEvent, scope: DeleteScope) => {
     const targets =
@@ -176,17 +213,23 @@ export function CalendarScreen() {
         ? [e]
         : events.filter((x) => x.series_id === e.series_id && (scope === 'series' || x.date >= e.date))
     setOpen(null)
-    await Promise.all(targets.map((x) => remove('events', x.id)))
+    await Promise.all(
+      targets.map(async (x) => {
+        // A deleted (e.g. cancelled) session shouldn't count as worked hours.
+        if (x.hour_entry_id && hour_entries.some((h) => h.id === x.hour_entry_id)) await remove('hour_entries', x.hour_entry_id)
+        if (x.supervision_session_id && supervision_sessions.some((s) => s.id === x.supervision_session_id))
+          await remove('supervision_sessions', x.supervision_session_id)
+        await remove('events', x.id)
+      }),
+    )
   }
 
   const saveDraft = async (d: EventDraft, dates: string[]) => {
-    if (d.id) {
-      await save('events', d)
-    } else if (dates.length > 1) {
-      const series_id = uuid()
-      await Promise.all(dates.map((date) => save('events', { ...d, date, series_id })))
+    if (d.id || dates.length <= 1) {
+      await persist(d)
     } else {
-      await save('events', d)
+      const series_id = uuid()
+      await Promise.all(dates.map((date) => persist({ ...d, date, series_id })))
     }
     setDraft(null)
   }
