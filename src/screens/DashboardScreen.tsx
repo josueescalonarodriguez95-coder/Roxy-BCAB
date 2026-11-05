@@ -26,7 +26,7 @@ export function DashboardScreen() {
   const supHours = monthHours.filter((h) => h.kind === 'supervision').reduce((s, h) => s + h.hours, 0)
   const expected =
     sumEarnings(earningsByCompany(companies, hour_entries, month)).total +
-    supervisionEarnings(supervisees, supervision_sessions, month, today()).reduce((sum, e) => sum + e.total, 0)
+    supervisionEarnings(supervisees, supervision_sessions, month, companies).reduce((sum, e) => sum + e.total, 0)
   const pending = sumPayments(payments).remaining
   const openTodos = todos.filter((td) => !td.done)
   const name = profile.display_name.trim().split(' ')[0]

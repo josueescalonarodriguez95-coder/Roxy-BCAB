@@ -27,7 +27,7 @@ export function EarningsScreen() {
     companyFilter ? supervisees.filter((s) => s.company_id === companyFilter) : supervisees,
     supervision_sessions,
     r,
-    today(),
+    companies,
   )
 
   // A payment belongs to the range where its pay period ends.
@@ -151,7 +151,10 @@ export function EarningsScreen() {
                       {e.supervisee.name}
                     </td>
                     <td className="num">{num(e.hours)}</td>
-                    <td className="num">{money(e.supervisee.rate)}</td>
+                    <td className="num" title={e.fromCompany ? t('earnings.rateFromCompany') : undefined}>
+                      {money(e.rate)}
+                      {e.fromCompany && <span className="muted small"> · {t('earnings.companyRate')}</span>}
+                    </td>
                     <td className="num strong">{money(e.total)}</td>
                   </tr>
                 ))}

@@ -4,6 +4,7 @@ import { NavIcon } from './components/NavIcon'
 import { APP_NAME } from './config'
 import { DataProvider, useData } from './data/DataContext'
 import { store, type User } from './data/store'
+import { useEventBackfill } from './data/usePersistEvent'
 import { useWarnings } from './data/useWarnings'
 import { useI18n } from './i18n'
 import { NavContext, TABS, type Tab } from './nav'
@@ -49,6 +50,8 @@ function Shell() {
   const { t } = useI18n()
   const { profile, saveProfile, missing } = useData()
   const warnings = useWarnings()
+  // Calendar events always have their hours in Hours / Earnings, whatever tab is open.
+  useEventBackfill()
   const [tab, setTab] = useState<Tab>(tabFromHash)
 
   useEffect(() => {

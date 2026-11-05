@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AgendaView } from '../components/calendar/AgendaView'
 import { EventDetails, type DeleteScope } from '../components/calendar/EventDetails'
-import { logPlan } from '../lib/eventLog'
+import { usePersistEvent } from '../data/usePersistEvent'
 import { EventForm, type EventDraft } from '../components/calendar/EventForm'
 import { MiniMonth } from '../components/calendar/MiniMonth'
 import { MonthView } from '../components/calendar/MonthView'
@@ -11,7 +11,7 @@ import { Segmented } from '../components/ui'
 import { useData } from '../data/DataContext'
 import { EVENT_KINDS, type CalendarEvent, type EventKind, type ISODate } from '../data/types'
 import { useI18n } from '../i18n'
-import { durationHours, fromMin, KIND_COLORS, shiftDate, toMin, weekDays, type CalView } from '../lib/calendar'
+import { fromMin, KIND_COLORS, shiftDate, toMin, weekDays, type CalView } from '../lib/calendar'
 import { addDays, today } from '../lib/dates'
 
 type Overlay = 'supervision' | 'auth' | 'pay'
@@ -120,72 +120,7 @@ export function CalendarScreen() {
     [],
   )
 
-  /**
-   * Saves an event and keeps its hours in step, like Office Puzzle: every timed work event
-   * (session, assessment, parent training, meeting, admin, supervision) becomes an entry in
-   * Hours, and a supervision also becomes a supervision meeting. Moving, resizing or editing the
-   * event updates them; changing it to a type that isn't logged removes them.
-   */
-  const persist = async (e: EventDraft): Promise<CalendarEvent> => {
-    const plan = logPlan(e, { clients, companies: data.companies, supervisees })
-    const hours = durationHours(e)
-    let hour_entry_id = e.hour_entry_id
-    let supervision_session_id = e.supervision_session_id
-
-    if (plan.hourKind && hours > 0 && plan.companyId) {
-      const existing = hour_entries.find((x) => x.id === hour_entry_id)
-      const he = await save('hour_entries', {
-        id: existing?.id,
-        date: e.date,
-        company_id: plan.companyId,
-        client_id: e.client_id,
-        kind: plan.hourKind,
-        hours,
-        note: e.title,
-      })
-      hour_entry_id = he.id
-    } else if (hour_entry_id) {
-      if (hour_entries.some((x) => x.id === hour_entry_id)) await remove('hour_entries', hour_entry_id)
-      hour_entry_id = null
-    }
-
-    if (plan.supervision && hours > 0 && e.supervisee_id) {
-      const existing = supervision_sessions.find((x) => x.id === supervision_session_id)
-      const s = await save('supervision_sessions', {
-        id: existing?.id,
-        supervisee_id: e.supervisee_id,
-        date: e.date,
-        hours,
-        // Keep "group" if it was changed by hand in Supervision.
-        format: existing?.format ?? 'individual',
-        with_client: !!e.client_id,
-        note: e.title,
-      })
-      supervision_session_id = s.id
-    } else if (supervision_session_id) {
-      if (supervision_sessions.some((x) => x.id === supervision_session_id)) await remove('supervision_sessions', supervision_session_id)
-      supervision_session_id = null
-    }
-
-    // Remember the company that was used, so the event shows it too.
-    return save('events', { ...e, company_id: e.company_id ?? plan.companyId, hour_entry_id, supervision_session_id })
-  }
-
-  // Events saved before their hours were logged (older versions, or a company / supervisee
-  // that was missing at the time): log what's still missing once, when the calendar opens.
-  const backfilled = useRef(false)
-  useEffect(() => {
-    if (backfilled.current) return
-    backfilled.current = true
-    for (const e of events) {
-      if (!durationHours(e)) continue
-      const plan = logPlan(e, { clients, companies: data.companies, supervisees })
-      const needsHours = plan.hourKind && plan.companyId && !e.hour_entry_id
-      const needsSupervision = plan.supervision && e.supervisee_id && !e.supervision_session_id
-      if (needsHours || needsSupervision) void persist(e)
-    }
-    // Runs once when the calendar opens.
-  }, [])
+  const persist = usePersistEvent()
 
   const h: CalHandlers = {
     onOpen: (e, anchor) => setOpen({ id: e.id, anchor }),
